@@ -58,6 +58,10 @@ def copy_and_transform(src_dir: Path, dest_dir: Path, slug_name: str, snake_name
             if file_name in IGNORED_FILES or file_name.endswith(".pyc"):
                 continue
 
+            # Skip release.yml workflow (starter repository specific)
+            if rel_root == Path(".github/workflows") and file_name == "release.yml":
+                continue
+
             src_file = Path(root) / file_name
             dest_file = target_root / file_name
 

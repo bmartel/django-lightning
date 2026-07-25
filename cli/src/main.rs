@@ -31,6 +31,10 @@ struct Cli {
     /// Custom template directory or repository URL
     #[arg(short, long)]
     template: Option<String>,
+
+    /// Include preconfigured GitHub Actions CI/CD workflows
+    #[arg(long, default_value_t = false)]
+    github_actions: bool,
 }
 
 #[derive(Subcommand)]
@@ -47,6 +51,10 @@ enum Commands {
         /// Custom template directory or repository URL
         #[arg(short, long)]
         template: Option<String>,
+
+        /// Include preconfigured GitHub Actions CI/CD workflows
+        #[arg(long, default_value_t = false)]
+        github_actions: bool,
     },
 }
 
@@ -67,7 +75,7 @@ fn is_dir_empty(path: &Path) -> bool {
     }
 }
 
-fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snake_name: &str) -> Result<()> {
+fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snake_name: &str, include_ci: bool) -> Result<()> {
     let ignored_dirs = [".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "staticfiles", "scratch", "target", "cli"];
     let ignored_files = ["db.sqlite3", "db.sqlite3-journal", ".DS_Store"];
 
@@ -79,6 +87,16 @@ fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snak
             let name = c.as_os_str().to_string_lossy();
             ignored_dirs.contains(&name.as_ref())
         }) {
+            continue;
+        }
+
+        // Exclude GitHub release workflow (starter repo specific)
+        if rel_path == Path::new(".github/workflows/release.yml") {
+            continue;
+        }
+
+        // Exclude GitHub workflows if user opted out
+        if !include_ci && rel_path.starts_with(".github") {
             continue;
         }
 
@@ -108,9 +126,16 @@ fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snak
     Ok(())
 }
 
-fn transform_in_place(dest_dir: &Path, slug_name: &str, snake_name: &str) -> Result<()> {
+fn transform_in_place(dest_dir: &Path, slug_name: &str, snake_name: &str, include_ci: bool) -> Result<()> {
     let ignored_dirs = [".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "staticfiles", "scratch", "target", "cli"];
     let ignored_files = ["db.sqlite3", "db.sqlite3-journal", ".DS_Store"];
+
+    // Remove starter repo specific release workflow
+    let _ = fs::remove_file(dest_dir.join(".github/workflows/release.yml"));
+
+    if !include_ci {
+        let _ = fs::remove_dir_all(dest_dir.join(".github"));
+    }
 
     for entry in WalkDir::new(dest_dir).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
@@ -145,7 +170,7 @@ fn transform_in_place(dest_dir: &Path, slug_name: &str, snake_name: &str) -> Res
 
 fn download_template_from_github(dest_dir: &Path) -> Result<()> {
     println!("  {}", "Downloading template from GitHub (bmartel/django-lightning)...".dimmed());
-    
+
     if !dest_dir.exists() {
         let status = Command::new("git")
             .args(["clone", "--depth", "1", REPO_URL, &dest_dir.to_string_lossy()])
@@ -213,7 +238,12 @@ fn setup_uv_env(dest_dir: &Path) {
     }
 }
 
-fn run_generator(name_opt: Option<String>, path_opt: Option<PathBuf>, template_opt: Option<String>) -> Result<()> {
+fn run_generator(
+    name_opt: Option<String>,
+    path_opt: Option<PathBuf>,
+    template_opt: Option<String>,
+    github_actions_flag: bool,
+) -> Result<()> {
     println!("{}", "⚡ create-django-bolt".bold().cyan());
     println!("{}", "   High-Performance Django-Bolt Project Generator\n".dimmed());
 
@@ -227,13 +257,26 @@ fn run_generator(name_opt: Option<String>, path_opt: Option<PathBuf>, template_o
 
     let (slug_name, snake_name) = sanitize_names(&raw_name);
 
+    let is_tty = dialoguer::console::user_attended_stderr() || dialoguer::console::Term::stdout().is_term();
+
+    let include_ci = if github_actions_flag {
+        true
+    } else if is_tty {
+        Confirm::new()
+            .with_prompt("Include preconfigured GitHub Actions CI/CD workflows?")
+            .default(true)
+            .interact_opt()?
+            .unwrap_or(true)
+    } else {
+        true
+    };
+
     let current_dir = std::env::current_dir()?;
     let dest_dir = match path_opt {
         Some(p) => p,
         None => current_dir.join(&slug_name),
     };
 
-    // Robust check for non-empty existing directory
     if dest_dir.exists() && !is_dir_empty(&dest_dir) {
         anyhow::bail!(
             "Destination directory '{}' already exists and is not empty!\nPlease specify a different name or path (e.g. create-django-bolt new {} -p /path/to/dir).",
@@ -250,20 +293,20 @@ fn run_generator(name_opt: Option<String>, path_opt: Option<PathBuf>, template_o
             anyhow::bail!("Template path '{}' does not exist!", src_path.display());
         }
         fs::create_dir_all(&dest_dir)?;
-        copy_and_transform_dir(&src_path, &dest_dir, &slug_name, &snake_name)?;
+        copy_and_transform_dir(&src_path, &dest_dir, &slug_name, &snake_name, include_ci)?;
     } else if current_dir.join("manage.py").exists() && current_dir.join("pyproject.toml").exists() {
-        // We are executing inside the template repository root itself
         fs::create_dir_all(&dest_dir)?;
-        copy_and_transform_dir(&current_dir, &dest_dir, &slug_name, &snake_name)?;
+        copy_and_transform_dir(&current_dir, &dest_dir, &slug_name, &snake_name, include_ci)?;
     } else {
-        // Download from GitHub template repo
         download_template_from_github(&dest_dir)?;
-        transform_in_place(&dest_dir, &slug_name, &snake_name)?;
+        transform_in_place(&dest_dir, &slug_name, &snake_name, include_ci)?;
     }
 
     initialize_git(&dest_dir);
 
-    let is_tty = dialoguer::console::user_attended_stderr() || dialoguer::console::Term::stdout().is_term();
+    if include_ci {
+        println!("  {}", "✓ Added GitHub Actions CI/CD workflows (.github/workflows)".green());
+    }
 
     let setup_env = if is_tty {
         Confirm::new()
@@ -296,8 +339,13 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Some(Commands::New { name, path, template }) => run_generator(name, path, template)?,
-        None => run_generator(cli.name, cli.path, cli.template)?,
+        Some(Commands::New {
+            name,
+            path,
+            template,
+            github_actions,
+        }) => run_generator(name, path, template, github_actions)?,
+        None => run_generator(cli.name, cli.path, cli.template, cli.github_actions)?,
     }
 
     Ok(())
