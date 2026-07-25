@@ -20,8 +20,8 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: cargo publish --manifest-path cli/Cargo.toml
 
-  build-release-binaries:
-    name: Build Cross-Platform Release Binaries
+  build-binaries:
+    name: Build Release Binary
     strategy:
       matrix:
         include:
@@ -60,9 +60,28 @@ jobs:
           cd cli/target/${{ matrix.target }}/release
           7z a ../../../../${{ matrix.asset_name }} create-django-bolt.exe
 
-      - name: Upload Release Asset
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}
+
+  publish-github-release:
+    name: Publish GitHub Release
+    needs: [build-binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download All Release Binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.asset_name }}
+          files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
