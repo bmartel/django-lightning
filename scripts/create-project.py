@@ -124,7 +124,7 @@ def main():
     print("\nNext steps:")
     print(f"  1. cd {dest_dir}")
     print("  2. uv venv")
-    print("  3. uv pip install -e \".[dev]\"")
+    print('  3. uv pip install -e ".[dev]"')
     print("  4. uv run manage.py migrate")
     print("  5. uv run manage.py runbolt --dev")
 

@@ -57,6 +57,7 @@ from fastapi import FastAPI, Query, Path, Header, Depends, UploadFile, File
 
 app = FastAPI()
 
+
 @app.get("/items/{item_id}")
 async def get_item(
     item_id: int = Path(..., ge=1),
@@ -91,6 +92,7 @@ async def get_item(
 ```python
 from pydantic import BaseModel, Field, field_validator
 
+
 class UserCreate(BaseModel):
     username: str = Field(..., min_length=3)
     email: str
@@ -109,6 +111,7 @@ class UserCreate(BaseModel):
 import msgspec
 from typing import Annotated
 
+
 class UserCreateDTO(msgspec.Struct):
     username: Annotated[str, msgspec.Meta(min_length=3)]
     email: str
@@ -119,6 +122,7 @@ class UserCreateDTO(msgspec.Struct):
 from typing import Annotated
 import msgspec
 from django_bolt.serializers import Serializer, field_validator
+
 
 class UserCreateSerializer(Serializer):
     username: Annotated[str, msgspec.Meta(min_length=3)]
@@ -145,8 +149,9 @@ async def get_db():
     finally:
         await db.close()
 
+
 @app.get("/users")
-async def list_users(db = Depends(get_db)):
+async def list_users(db=Depends(get_db)):
     return await db.fetch_all()
 ```
 
@@ -156,12 +161,14 @@ from django_bolt import BoltAPI, Depends
 
 api = BoltAPI()
 
+
 async def get_db():
     db = await connect_database()
     try:
         yield db
     finally:
         await db.close()
+
 
 @api.get("/users")
 async def list_users(db=Depends(get_db)):
@@ -198,10 +205,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import serializers
 from .models import Item
 
+
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
-        fields = ['id', 'name', 'price']
+        fields = ["id", "name", "price"]
+
 
 class ItemListCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -229,14 +238,17 @@ from app.guards import IsAuthenticated
 
 api = BoltAPI()
 
+
 class ItemIn(msgspec.Struct):
     name: str
     price: float
+
 
 class ItemOut(msgspec.Struct):
     id: int
     name: str
     price: float
+
 
 @api.get("/items", response_model=list[ItemOut], guards=[IsAuthenticated()])
 async def list_items():
@@ -244,6 +256,7 @@ async def list_items():
     async for item in Item.objects.filter(is_active=True):
         items.append({"id": item.id, "name": item.name, "price": float(item.price)})
     return items
+
 
 @api.post("/items", response_model=ItemOut, status_code=201, guards=[IsAuthenticated()])
 async def create_item(payload: ItemIn, current_user: dict = Depends(get_current_user)):
@@ -281,13 +294,16 @@ from ninja.security import HttpBearer
 
 api = NinjaAPI()
 
+
 class AuthBearer(HttpBearer):
     def authenticate(self, request, token):
         if token == "secret":
             return token
 
+
 class PayloadSchema(Schema):
     title: str
+
 
 @api.post("/upload", auth=AuthBearer())
 def upload(request, payload: PayloadSchema, file: UploadedFile = File(...)):
@@ -304,8 +320,10 @@ from app.auth import get_current_user
 
 api = BoltAPI()
 
+
 class PayloadStruct(msgspec.Struct):
     title: str
+
 
 @api.post("/upload")
 async def upload(

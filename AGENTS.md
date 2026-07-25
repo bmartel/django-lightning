@@ -57,6 +57,7 @@ When completing specific subtasks, consult and adhere to the relevant skill file
 - **[django-bolt-auth-security](file:///.agents/django-bolt-auth-security/SKILL.md)**: Custom User Model, JWT authentication, permission guards (`@guard`), CORS, rate limiting, and security headers.
 - **[django-bolt-async-orm-db](file:///.agents/django-bolt-async-orm-db/SKILL.md)**: Async Django ORM, query optimization (`select_related`), connection pooling, and migrations.
 - **[django-bolt-realtime-mcp](file:///.agents/django-bolt-realtime-mcp/SKILL.md)**: SSE, WebSockets, streaming responses, and `bolt-mcp` (Streamable HTTP MCP server).
+- **[django-bolt-background-workers](file:///.agents/django-bolt-background-workers/SKILL.md)**: Ultra-high-throughput async queue worker engine (`SAQ` + Redis) with 10,000+ jobs/sec and ~30MB RAM footprint.
 - **[django-bolt-testing-observability](file:///.agents/django-bolt-testing-observability/SKILL.md)**: `TestClient` unit tests, `pytest-asyncio`, Scalar OpenAPI docs at `/docs`, timing & logging middleware.
 - **[django-bolt-docker](file:///.agents/django-bolt-docker/SKILL.md)**: Multi-stage Docker builds using `uv`, `.dockerignore`, and local multi-service orchestration via `docker-compose.yml`.
 - **[django-bolt-kubernetes](file:///.agents/django-bolt-kubernetes/SKILL.md)**: Production Kubernetes manifests in `k8s/` (`deployment.yaml`, `service.yaml`, `ingress.yaml`, `configmap.yaml`, `secret.yaml`, `hpa.yaml`).
@@ -73,6 +74,7 @@ This project uses `just` (or `uv`) for all tasks:
 - **Scaffold New Project (Rust CLI)**: `create-django-bolt new <name> [-p dest]`
 - **Scaffold New Project (Script)**: `just new-project <name> [dest]` (or `uv run python scripts/create-project.py <name> [dest]`)
 - **Start Local Server**: `just dev` (or `uv run manage.py runbolt --dev`)
+- **Start Background Worker**: `just worker` (or `uv run saq app.tasks.settings`)
 - **Run Tests**: `just test` (or `uv run pytest -v`)
 - **Run Linting**: `just lint` (or `uv run ruff check .`)
 - **Format Code**: `just format` (or `uv run ruff format .`)

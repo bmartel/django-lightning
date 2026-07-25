@@ -15,6 +15,10 @@ build-cli:
 dev:
     uv run manage.py runbolt --dev
 
+# Run high-performance SAQ background job worker process
+worker:
+    uv run saq app.tasks.settings
+
 # Run database migrations via uv
 migrate:
     uv run manage.py migrate
