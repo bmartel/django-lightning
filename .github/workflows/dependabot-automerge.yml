@@ -1,8 +1,8 @@
 name: Dependabot Auto-Merge
 
 on:
-  pull_request_target:
-    types: [labeled, opened, synchronize, reopened, ready_for_review]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
@@ -20,10 +20,8 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Approve and Auto-Merge Dependabot PR
-        run: |
-          gh pr review --approve "$PR_URL" || true
-          gh pr merge --auto --squash "$PR_URL" || true
+      - name: Enable Auto-Merge for Dependabot PR
+        run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
