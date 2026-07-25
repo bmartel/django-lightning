@@ -1,0 +1,46 @@
+[project]
+name = "django-lightning"
+version = "0.1.0"
+description = "High-performance Agentic Django-Bolt starter template for production APIs, WebSockets, MCP, Docker, Kubernetes, and Fly.io"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.1.0",
+    "django-bolt>=0.7.0",
+    "bolt-mcp>=0.1.0",
+    "msgspec>=0.18.0",
+    "psycopg[binary]>=3.2.0",
+    "dj-database-url>=2.2.0",
+    "django-cors-headers>=4.4.0",
+    "pyjwt>=2.8.0",
+    "redis>=5.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-django>=4.8.0",
+    "httpx>=0.27.0",
+    "ruff>=0.5.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*", "config*"]
+
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py", "*_test.py"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "N"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"app/migrations/*" = ["E501"]

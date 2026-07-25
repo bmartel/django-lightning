@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-lightning
+  labels:
+    app: django-lightning
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: django-lightning
+  template:
+    metadata:
+      labels:
+        app: django-lightning
+    spec:
+      containers:
+      - name: api
+        image: django-lightning:latest
+        imagePullPolicy: IfNotPresent
+        command: ["uv", "run", "manage.py", "runbolt", "--host", "0.0.0.0", "--port", "8000", "--processes", "4"]
+        ports:
+        - containerPort: 8000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: django-lightning-config
+        - secretRef:
+            name: django-lightning-secret
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: django-lightning-config
+data:
+  DEBUG: "0"
+  ALLOWED_HOSTS: "api.example.com,localhost"
+  DJANGO_SETTINGS_MODULE: "config.settings"
