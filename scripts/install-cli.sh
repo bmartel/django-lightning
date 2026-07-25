@@ -4,7 +4,16 @@ set -e
 
 REPO="bmartel/django-lightning"
 BIN_NAME="create-django-bolt"
-INSTALL_DIR="/usr/local/bin"
+
+# Determine install directory (prefer ~/.local/bin or /usr/local/bin)
+if [ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin" 2>/dev/null; then
+    INSTALL_DIR="$HOME/.local/bin"
+elif [ -w "/usr/local/bin" ]; then
+    INSTALL_DIR="/usr/local/bin"
+else
+    INSTALL_DIR="$HOME/bin"
+    mkdir -p "$INSTALL_DIR"
+fi
 
 OS="$(uname -s)"
 ARCH="$(uname -m)"
@@ -38,13 +47,7 @@ curl -fsSL "$URL" -o "${TMP_DIR}/cli.tar.gz"
 
 tar -xzf "${TMP_DIR}/cli.tar.gz" -C "${TMP_DIR}"
 
-if [ -w "$INSTALL_DIR" ]; then
-    mv "${TMP_DIR}/${BIN_NAME}" "${INSTALL_DIR}/${BIN_NAME}"
-else
-    echo "Elevated permissions needed to install to ${INSTALL_DIR}..."
-    sudo mv "${TMP_DIR}/${BIN_NAME}" "${INSTALL_DIR}/${BIN_NAME}"
-fi
-
+mv "${TMP_DIR}/${BIN_NAME}" "${INSTALL_DIR}/${BIN_NAME}"
 chmod +x "${INSTALL_DIR}/${BIN_NAME}"
 rm -rf "$TMP_DIR"
 
