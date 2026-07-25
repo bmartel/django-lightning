@@ -57,6 +57,16 @@ fn sanitize_names(input: &str) -> (String, String) {
     (slug, snake)
 }
 
+fn is_dir_empty(path: &Path) -> bool {
+    if !path.exists() {
+        return true;
+    }
+    match fs::read_dir(path) {
+        Ok(mut entries) => entries.next().is_none(),
+        Err(_) => false,
+    }
+}
+
 fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snake_name: &str) -> Result<()> {
     let ignored_dirs = [".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "staticfiles", "scratch", "target", "cli"];
     let ignored_files = ["db.sqlite3", "db.sqlite3-journal", ".DS_Store"];
@@ -133,6 +143,36 @@ fn transform_in_place(dest_dir: &Path, slug_name: &str, snake_name: &str) -> Res
     Ok(())
 }
 
+fn download_template_from_github(dest_dir: &Path) -> Result<()> {
+    println!("  {}", "Downloading template from GitHub (bmartel/django-lightning)...".dimmed());
+    
+    if !dest_dir.exists() {
+        let status = Command::new("git")
+            .args(["clone", "--depth", "1", REPO_URL, &dest_dir.to_string_lossy()])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .context("Failed to execute git clone")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to clone template repository from '{}'", REPO_URL);
+        }
+    } else {
+        let status = Command::new("git")
+            .args(["clone", "--depth", "1", REPO_URL, "."])
+            .current_dir(dest_dir)
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .context("Failed to execute git clone")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to clone template repository into existing directory '{}'", dest_dir.display());
+        }
+    }
+    Ok(())
+}
+
 fn initialize_git(dest_dir: &Path) {
     let _ = fs::remove_dir_all(dest_dir.join(".git"));
 
@@ -193,8 +233,13 @@ fn run_generator(name_opt: Option<String>, path_opt: Option<PathBuf>, template_o
         None => current_dir.join(&slug_name),
     };
 
-    if dest_dir.exists() && fs::read_dir(&dest_dir)?.next().is_some() {
-        anyhow::bail!("Destination directory '{}' exists and is not empty!", dest_dir.display());
+    // Robust check for non-empty existing directory
+    if dest_dir.exists() && !is_dir_empty(&dest_dir) {
+        anyhow::bail!(
+            "Destination directory '{}' already exists and is not empty!\nPlease specify a different name or path (e.g. create-django-bolt new {} -p /path/to/dir).",
+            dest_dir.display(),
+            slug_name
+        );
     }
 
     println!("🚀 Creating Django-Bolt project '{}' in '{}'...", slug_name.bold().green(), dest_dir.display());
@@ -211,19 +256,8 @@ fn run_generator(name_opt: Option<String>, path_opt: Option<PathBuf>, template_o
         fs::create_dir_all(&dest_dir)?;
         copy_and_transform_dir(&current_dir, &dest_dir, &slug_name, &snake_name)?;
     } else {
-        // Clone directly from GitHub repository
-        println!("  {}", "Downloading template from GitHub (bmartel/django-lightning)...".dimmed());
-        let status = Command::new("git")
-            .args(["clone", "--depth", "1", REPO_URL, &dest_dir.to_string_lossy()])
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .status()
-            .context("Failed to execute git clone")?;
-
-        if !status.success() {
-            anyhow::bail!("Failed to clone template repository from '{}'", REPO_URL);
-        }
-
+        // Download from GitHub template repo
+        download_template_from_github(&dest_dir)?;
         transform_in_place(&dest_dir, &slug_name, &snake_name)?;
     }
 
