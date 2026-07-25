@@ -1,1 +1,5 @@
-# Main application package
+"""
+django-lightning Application Package.
+"""
+
+__version__ = "0.1.0"

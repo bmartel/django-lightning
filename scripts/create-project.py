@@ -17,6 +17,7 @@ from pathlib import Path
 
 IGNORED_DIRS = {
     ".git",
+    "cli",
     ".venv",
     "venv",
     "__pycache__",
@@ -76,6 +77,14 @@ def copy_and_transform(src_dir: Path, dest_dir: Path, slug_name: str, snake_name
                 content = content.replace("django-lightning", slug_name)
                 content = content.replace("django_lightning", snake_name)
                 content = content.replace("Django Lightning", slug_name.replace("-", " ").title())
+
+                if file_name == "justfile":
+                    cli_task = (
+                        "\n# Build the Rust CLI tool (create-django-bolt)\n"
+                        "build-cli:\n"
+                        "    cargo build --manifest-path cli/Cargo.toml --release\n"
+                    )
+                    content = content.replace(cli_task, "")
 
                 dest_file.write_text(content, encoding="utf-8")
             except UnicodeDecodeError:

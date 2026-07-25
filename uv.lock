@@ -170,7 +170,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "bolt-mcp", specifier = ">=0.1.0" },
-    { name = "dj-database-url", specifier = ">=2.2.0" },
+    { name = "dj-database-url", specifier = ">=3.1.2" },
     { name = "django", specifier = ">=5.1.0" },
     { name = "django-bolt", specifier = ">=0.7.0" },
     { name = "django-cors-headers", specifier = ">=4.4.0" },
@@ -179,8 +179,8 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.0" },
     { name = "pyjwt", specifier = ">=2.8.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
-    { name = "pytest-django", marker = "extra == 'dev'", specifier = ">=4.8.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.4.0" },
+    { name = "pytest-django", marker = "extra == 'dev'", specifier = ">=4.12.0" },
     { name = "redis", specifier = ">=5.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5.0" },
     { name = "saq", specifier = ">=0.26.4" },

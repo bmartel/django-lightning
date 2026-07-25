@@ -1,0 +1,25 @@
+name: Automated Semantic Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    if: github.repository != 'bmartel/django-lightning'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Python Semantic Release
+        uses: python-semantic-release/python-semantic-release@v9.18.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}

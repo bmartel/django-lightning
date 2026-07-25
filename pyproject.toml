@@ -45,3 +45,10 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "app/migrations/*" = ["E501"]
+
+[tool.semantic_release]
+version_variables = ["app/__init__.py:__version__"]
+branch = "main"
+upload_to_pypi = false
+upload_to_release = true
+build_command = false

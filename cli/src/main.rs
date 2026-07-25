@@ -111,11 +111,16 @@ fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snak
             }
 
             if let Ok(content) = fs::read_to_string(path) {
-                let transformed = content
+                let mut transformed = content
                     .replace("django-lightning-mcp", &format!("{}-mcp", slug_name))
                     .replace("django-lightning", slug_name)
                     .replace("django_lightning", snake_name)
                     .replace("Django Lightning", &slug_name.replace('-', " "));
+
+                // Strip starter CLI build task from generated project's justfile
+                if file_name == "justfile" {
+                    transformed = transformed.replace("\n# Build the Rust CLI tool (create-django-bolt)\nbuild-cli:\n    cargo build --manifest-path cli/Cargo.toml --release\n", "");
+                }
 
                 fs::write(&target_path, transformed)?;
             } else {
@@ -153,15 +158,18 @@ fn transform_in_place(dest_dir: &Path, slug_name: &str, snake_name: &str, includ
             if ignored_files.contains(&file_name.as_ref()) || file_name.ends_with(".pyc") {
                 continue;
             }
-
-            if let Ok(content) = fs::read_to_string(path) {
-                let transformed = content
+            if let Ok(content) = fs::read_to_string(&path) {
+                let mut transformed = content
                     .replace("django-lightning-mcp", &format!("{}-mcp", slug_name))
                     .replace("django-lightning", slug_name)
                     .replace("django_lightning", snake_name)
                     .replace("Django Lightning", &slug_name.replace('-', " "));
 
-                fs::write(path, transformed)?;
+                if file_name == "justfile" {
+                    transformed = transformed.replace("\n# Build the Rust CLI tool (create-django-bolt)\nbuild-cli:\n    cargo build --manifest-path cli/Cargo.toml --release\n", "");
+                }
+
+                let _ = fs::write(&path, transformed);
             }
         }
     }
