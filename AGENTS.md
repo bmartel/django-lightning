@@ -98,12 +98,17 @@ django-lightning/
 ├── docker-compose.yml                   # Local dev environment (API, Postgres, Redis)
 ├── fly.toml                             # Fly.io deployment specification
 │
+├── cli/                                 # Ultra-fast Rust CLI tool (create-django-bolt)
+│   ├── Cargo.toml
+│   └── src/main.rs
+│
 ├── .agents/                             # Comprehensive Agent Skills directory
 │   ├── django-bolt-core/SKILL.md
 │   ├── django-bolt-schemas-serializers/SKILL.md
 │   ├── django-bolt-auth-security/SKILL.md
 │   ├── django-bolt-async-orm-db/SKILL.md
 │   ├── django-bolt-realtime-mcp/SKILL.md
+│   ├── django-bolt-background-workers/SKILL.md
 │   ├── django-bolt-testing-observability/SKILL.md
 │   ├── django-bolt-docker/SKILL.md
 │   ├── django-bolt-kubernetes/SKILL.md
@@ -120,11 +125,12 @@ django-lightning/
 │   ├── main.py                          # BoltAPI initialization & route mounting
 │   ├── models.py                        # Custom User Model (AbstractUser) out of the box
 │   ├── auth.py                          # JWT authentication utilities
+│   ├── tasks.py                         # High-performance SAQ background tasks
 │   ├── schemas/                         # msgspec Structs and Serializers
 │   ├── guards/                          # Custom permission guards
 │   ├── routes/                          # API endpoints (health, auth, realtime, mcp)
-│   └── tests/                           # Async pytest suite using TestClient
+│   └── tests/                           # Async pytest suite (test_admin, test_auth, test_tasks, test_mcp)
 │
 ├── k8s/                                 # Kubernetes manifests (Deployment, Service, Ingress, HPA)
-└── .github/workflows/ci.yml             # GitHub Actions CI pipeline with uv
+└── .github/workflows/                   # CI/CD & release automation pipelines
 ```
