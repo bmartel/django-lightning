@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use walkdir::WalkDir;
 
+const REPO_URL: &str = "https://github.com/bmartel/django-lightning.git";
+
 #[derive(Parser)]
 #[command(
     name = "create-django-bolt",
@@ -25,6 +27,10 @@ struct Cli {
     /// Destination directory
     #[arg(short, long)]
     path: Option<PathBuf>,
+
+    /// Custom template directory or repository URL
+    #[arg(short, long)]
+    template: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -37,6 +43,10 @@ enum Commands {
         /// Destination directory
         #[arg(short, long)]
         path: Option<PathBuf>,
+
+        /// Custom template directory or repository URL
+        #[arg(short, long)]
+        template: Option<String>,
     },
 }
 
@@ -47,15 +57,14 @@ fn sanitize_names(input: &str) -> (String, String) {
     (slug, snake)
 }
 
-fn copy_and_transform(src_dir: &Path, dest_dir: &Path, slug_name: &str, snake_name: &str) -> Result<()> {
-    let ignored_dirs = ["git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "staticfiles", "scratch", "target", "cli"];
+fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snake_name: &str) -> Result<()> {
+    let ignored_dirs = [".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "staticfiles", "scratch", "target", "cli"];
     let ignored_files = ["db.sqlite3", "db.sqlite3-journal", ".DS_Store"];
 
     for entry in WalkDir::new(src_dir).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
         let rel_path = path.strip_prefix(src_dir)?;
 
-        // Skip ignored directories
         if rel_path.components().any(|c| {
             let name = c.as_os_str().to_string_lossy();
             ignored_dirs.contains(&name.as_ref())
@@ -89,7 +98,44 @@ fn copy_and_transform(src_dir: &Path, dest_dir: &Path, slug_name: &str, snake_na
     Ok(())
 }
 
+fn transform_in_place(dest_dir: &Path, slug_name: &str, snake_name: &str) -> Result<()> {
+    let ignored_dirs = [".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "staticfiles", "scratch", "target", "cli"];
+    let ignored_files = ["db.sqlite3", "db.sqlite3-journal", ".DS_Store"];
+
+    for entry in WalkDir::new(dest_dir).into_iter().filter_map(|e| e.ok()) {
+        let path = entry.path();
+        let rel_path = path.strip_prefix(dest_dir)?;
+
+        if rel_path.components().any(|c| {
+            let name = c.as_os_str().to_string_lossy();
+            ignored_dirs.contains(&name.as_ref())
+        }) {
+            continue;
+        }
+
+        if path.is_file() {
+            let file_name = path.file_name().unwrap_or_default().to_string_lossy();
+            if ignored_files.contains(&file_name.as_ref()) || file_name.ends_with(".pyc") {
+                continue;
+            }
+
+            if let Ok(content) = fs::read_to_string(path) {
+                let transformed = content
+                    .replace("django-lightning-mcp", &format!("{}-mcp", slug_name))
+                    .replace("django-lightning", slug_name)
+                    .replace("django_lightning", snake_name)
+                    .replace("Django Lightning", &slug_name.replace('-', " "));
+
+                fs::write(path, transformed)?;
+            }
+        }
+    }
+    Ok(())
+}
+
 fn initialize_git(dest_dir: &Path) {
+    let _ = fs::remove_dir_all(dest_dir.join(".git"));
+
     if Command::new("git")
         .args(["init"])
         .current_dir(dest_dir)
@@ -105,7 +151,7 @@ fn initialize_git(dest_dir: &Path) {
 
 fn setup_uv_env(dest_dir: &Path) {
     println!("\n{}", "⚙ Setting up Python environment with uv...".cyan());
-    
+
     let venv_status = Command::new("uv")
         .arg("venv")
         .current_dir(dest_dir)
@@ -127,7 +173,7 @@ fn setup_uv_env(dest_dir: &Path) {
     }
 }
 
-fn run_generator(name_opt: Option<String>, path_opt: Option<PathBuf>) -> Result<()> {
+fn run_generator(name_opt: Option<String>, path_opt: Option<PathBuf>, template_opt: Option<String>) -> Result<()> {
     println!("{}", "⚡ create-django-bolt".bold().cyan());
     println!("{}", "   High-Performance Django-Bolt Project Generator\n".dimmed());
 
@@ -151,26 +197,35 @@ fn run_generator(name_opt: Option<String>, path_opt: Option<PathBuf>) -> Result<
         anyhow::bail!("Destination directory '{}' exists and is not empty!", dest_dir.display());
     }
 
-    // Determine template directory (current project root)
-    let exe_path = std::env::current_exe()?;
-    let template_dir = exe_path
-        .parent()
-        .and_then(|p| p.parent())
-        .and_then(|p| p.parent())
-        .unwrap_or(&current_dir);
-
-    // If template dir has manage.py, use it; otherwise fallback to current_dir
-    let src_template = if template_dir.join("manage.py").exists() {
-        template_dir.to_path_buf()
-    } else {
-        current_dir.clone()
-    };
-
     println!("🚀 Creating Django-Bolt project '{}' in '{}'...", slug_name.bold().green(), dest_dir.display());
 
-    fs::create_dir_all(&dest_dir)?;
-    copy_and_transform(&src_template, &dest_dir, &slug_name, &snake_name)
-        .context("Failed to scaffold project files")?;
+    if let Some(template_path) = template_opt {
+        let src_path = PathBuf::from(template_path);
+        if !src_path.exists() {
+            anyhow::bail!("Template path '{}' does not exist!", src_path.display());
+        }
+        fs::create_dir_all(&dest_dir)?;
+        copy_and_transform_dir(&src_path, &dest_dir, &slug_name, &snake_name)?;
+    } else if current_dir.join("manage.py").exists() && current_dir.join("pyproject.toml").exists() {
+        // We are executing inside the template repository root itself
+        fs::create_dir_all(&dest_dir)?;
+        copy_and_transform_dir(&current_dir, &dest_dir, &slug_name, &snake_name)?;
+    } else {
+        // Clone directly from GitHub repository
+        println!("  {}", "Downloading template from GitHub (bmartel/django-lightning)...".dimmed());
+        let status = Command::new("git")
+            .args(["clone", "--depth", "1", REPO_URL, &dest_dir.to_string_lossy()])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .context("Failed to execute git clone")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to clone template repository from '{}'", REPO_URL);
+        }
+
+        transform_in_place(&dest_dir, &slug_name, &snake_name)?;
+    }
 
     initialize_git(&dest_dir);
 
@@ -207,8 +262,8 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Some(Commands::New { name, path }) => run_generator(name, path)?,
-        None => run_generator(cli.name, cli.path)?,
+        Some(Commands::New { name, path, template }) => run_generator(name, path, template)?,
+        None => run_generator(cli.name, cli.path, cli.template)?,
     }
 
     Ok(())
