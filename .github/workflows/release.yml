@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   publish-crates-io:
     name: Publish create-django-bolt to Crates.io
