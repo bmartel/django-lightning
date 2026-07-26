@@ -1,12 +1,21 @@
 # CHANGELOG
 
 
+## v0.5.0 (2026-07-26)
+
+
 ## v0.4.1 (2026-07-26)
 
 ### Bug Fixes
 
 - **profiling**: Add user_date_joined_idx index and enhance SQLite/Postgres EXPLAIN parser
   ([`f741086`](https://github.com/bmartel/django-lightning/commit/f74108644e8bdc2b8752e840215d803641efc6b7))
+
+### Features
+
+- Add comprehensive agent skill documentation, project creation script, and CLI stub to
+  django-lightning
+  ([`ad3b0c9`](https://github.com/bmartel/django-lightning/commit/ad3b0c9d72dd520e8816434a022fcab40e9d35ef))
 
 
 ## v0.4.0 (2026-07-26)
