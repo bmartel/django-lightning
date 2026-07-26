@@ -16,5 +16,4 @@ scratch
 docker-compose*.yml
 k8s/
 fly.toml
-README.md
 AGENTS.md
