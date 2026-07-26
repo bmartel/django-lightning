@@ -330,7 +330,7 @@ fn run_generator(
         setup_uv_env(&dest_dir);
     }
 
-    println!("\n✨ Project scaffolding complete!".bold().green());
+    println!("\n{}", "✨ Project scaffolding complete!".bold().green());
     println!("\nNext steps:");
     let mut step = 1;
     println!("  {}. cd {}", step, dest_dir.display().to_string().bold());
