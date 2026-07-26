@@ -67,21 +67,22 @@ Welcome agent. This repository is **django-lightning**, a high-performance start
 
 ---
 
-## 🛠 AVAILABLE AGENT SKILLS INDEX (`.agents/`)
+## 🛠 AVAILABLE AGENT SKILLS INDEX (`.agents/skills/`)
 
 When completing specific subtasks, consult and adhere to the relevant skill file:
 
-- **[django-bolt-core](file:///.agents/django-bolt-core/SKILL.md)**: `BoltAPI` initialization, routing, HTTP verbs, parameter extraction, and response formatting.
-- **[django-bolt-schemas-serializers](file:///.agents/django-bolt-schemas-serializers/SKILL.md)**: `msgspec.Struct`, `Serializer` validation, field & model validators.
-- **[django-bolt-auth-security](file:///.agents/django-bolt-auth-security/SKILL.md)**: Custom User Model, JWT authentication, permission guards (`@guard`), CORS, rate limiting, and security headers.
-- **[django-bolt-async-orm-db](file:///.agents/django-bolt-async-orm-db/SKILL.md)**: Async Django ORM, query optimization (`select_related`), connection pooling, and migrations.
-- **[django-bolt-realtime-mcp](file:///.agents/django-bolt-realtime-mcp/SKILL.md)**: SSE, WebSockets, streaming responses, and `bolt-mcp` (Streamable HTTP MCP server).
-- **[django-bolt-background-workers](file:///.agents/django-bolt-background-workers/SKILL.md)**: Ultra-high-throughput async queue worker engine (`SAQ` + Redis) with 10,000+ jobs/sec and ~30MB RAM footprint.
-- **[django-bolt-testing-observability](file:///.agents/django-bolt-testing-observability/SKILL.md)**: `TestClient` unit tests, `pytest-asyncio`, Scalar OpenAPI docs at `/docs`, timing & logging middleware.
-- **[django-bolt-docker](file:///.agents/django-bolt-docker/SKILL.md)**: Multi-stage Docker builds using `uv`, `.dockerignore`, and local multi-service orchestration via `docker-compose.yml`.
-- **[django-bolt-kubernetes](file:///.agents/django-bolt-kubernetes/SKILL.md)**: Production Kubernetes manifests in `k8s/` (`deployment.yaml`, `service.yaml`, `ingress.yaml`, `configmap.yaml`, `secret.yaml`, `hpa.yaml`).
-- **[django-bolt-fly-io](file:///.agents/django-bolt-fly-io/SKILL.md)**: `fly.toml` configuration, Fly Postgres binding, environment secrets, and deployment.
-- **[django-bolt-migration](file:///.agents/django-bolt-migration/SKILL.md)**: Migration guides from FastAPI, DRF, and Django Ninja to `django-bolt`.
+- **[django-bolt-core](file:///.agents/skills/django-bolt-core/SKILL.md)**: `BoltAPI` initialization, routing, HTTP verbs, parameter extraction, and response formatting.
+- **[django-bolt-schemas-serializers](file:///.agents/skills/django-bolt-schemas-serializers/SKILL.md)**: `msgspec.Struct`, `Serializer` validation, field & model validators.
+- **[django-bolt-auth-security](file:///.agents/skills/django-bolt-auth-security/SKILL.md)**: Custom User Model, JWT authentication, permission guards (`@guard`), CORS, rate limiting, and security headers.
+- **[django-bolt-async-orm-db](file:///.agents/skills/django-bolt-async-orm-db/SKILL.md)**: Async Django ORM, query optimization (`select_related`), connection pooling, and migrations.
+- **[django-bolt-realtime-mcp](file:///.agents/skills/django-bolt-realtime-mcp/SKILL.md)**: SSE, WebSockets, streaming responses, and `bolt-mcp` (Streamable HTTP MCP server).
+- **[django-bolt-background-workers](file:///.agents/skills/django-bolt-background-workers/SKILL.md)**: Ultra-high-throughput async queue worker engine (`SAQ` + Redis) with 10,000+ jobs/sec and ~30MB RAM footprint.
+- **[django-bolt-testing-observability](file:///.agents/skills/django-bolt-testing-observability/SKILL.md)**: `TestClient` unit tests, `pytest-asyncio`, Scalar OpenAPI docs at `/docs`, timing & logging middleware.
+- **[django-bolt-docker](file:///.agents/skills/django-bolt-docker/SKILL.md)**: Multi-stage Docker builds using `uv`, `.dockerignore`, and local multi-service orchestration via `docker-compose.yml`.
+- **[django-bolt-kubernetes](file:///.agents/skills/django-bolt-kubernetes/SKILL.md)**: Production Kubernetes manifests in `k8s/` (`deployment.yaml`, `service.yaml`, `ingress.yaml`, `configmap.yaml`, `secret.yaml`, `hpa.yaml`).
+- **[django-bolt-fly-io](file:///.agents/skills/django-bolt-fly-io/SKILL.md)**: `fly.toml` configuration, Fly Postgres binding, environment secrets, and deployment.
+- **[django-bolt-migration](file:///.agents/skills/django-bolt-migration/SKILL.md)**: Migration guides from FastAPI, DRF, and Django Ninja to `django-bolt`.
+- **[agentic-task-orchestration](file:///.agents/skills/agentic-task-orchestration/SKILL.md)**: Autonomous worktree creation, task implementation, CI pipeline monitoring, automated PR creation, review, and safe backlog merging.
 
 ---
 
@@ -121,18 +122,20 @@ django-lightning/
 │   ├── Cargo.toml
 │   └── src/main.rs
 │
-├── .agents/                             # Comprehensive Agent Skills directory
-│   ├── django-bolt-core/SKILL.md
-│   ├── django-bolt-schemas-serializers/SKILL.md
-│   ├── django-bolt-auth-security/SKILL.md
-│   ├── django-bolt-async-orm-db/SKILL.md
-│   ├── django-bolt-realtime-mcp/SKILL.md
-│   ├── django-bolt-background-workers/SKILL.md
-│   ├── django-bolt-testing-observability/SKILL.md
-│   ├── django-bolt-docker/SKILL.md
-│   ├── django-bolt-kubernetes/SKILL.md
-│   ├── django-bolt-fly-io/SKILL.md
-│   └── django-bolt-migration/SKILL.md
+├── .agents/                             # Comprehensive Agent Skills & Tasks directory
+│   ├── skills/                          # Modular agent skills
+│   │   ├── django-bolt-core/SKILL.md
+│   │   ├── django-bolt-schemas-serializers/SKILL.md
+│   │   ├── django-bolt-auth-security/SKILL.md
+│   │   ├── django-bolt-async-orm-db/SKILL.md
+│   │   ├── django-bolt-realtime-mcp/SKILL.md
+│   │   ├── django-bolt-background-workers/SKILL.md
+│   │   ├── django-bolt-testing-observability/SKILL.md
+│   │   ├── django-bolt-docker/SKILL.md
+│   │   ├── django-bolt-kubernetes/SKILL.md
+│   │   ├── django-bolt-fly-io/SKILL.md
+│   │   └── django-bolt-migration/SKILL.md
+│   └── tasks/                           # Project task tracking backlog
 │
 ├── config/                              # Django settings & ASGI/WSGI entrypoints
 │   ├── settings.py                      # Configured with AUTH_USER_MODEL = "app.User"

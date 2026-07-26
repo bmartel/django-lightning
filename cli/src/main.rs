@@ -76,7 +76,7 @@ fn is_dir_empty(path: &Path) -> bool {
 }
 
 fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snake_name: &str, include_ci: bool) -> Result<()> {
-    let ignored_dirs = [".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "staticfiles", "scratch", "target", "cli"];
+    let ignored_dirs = [".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "staticfiles", "scratch", "target", "cli", ".worktrees"];
     let ignored_files = ["db.sqlite3", "db.sqlite3-journal", ".DS_Store"];
 
     for entry in WalkDir::new(src_dir).into_iter().filter_map(|e| e.ok()) {

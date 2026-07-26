@@ -26,7 +26,7 @@ Equipped with a **Custom User Model** ready out of the box, a comprehensive set 
 - **🐳 Multi-Stage Docker**: Production-optimized multi-stage Dockerfile using `uv`.
 - **☸ Enterprise Kubernetes**: Ready-to-apply K8s manifests in `k8s/` including Deployments, ClusterIP Service, Ingress, Secrets, ConfigMaps, and HPA (HorizontalPodAutoscaler).
 - **🚀 Fly.io Ready**: Single-command deployment with `fly.toml`.
-- **🧠 11 Dedicated Agent Skills**: Comprehensive modular skills in `.agents/` guiding AI agents across every architectural domain.
+- **🧠 12 Dedicated Agent Skills**: Comprehensive modular skills in `.agents/skills/` guiding AI agents across every architectural domain.
 
 ## 🦀 Scaffolding a New Project via Rust CLI (`create-django-bolt`)
 
@@ -159,18 +159,19 @@ To ensure APIs operate at peak performance (~60k+ RPS), all developers and AI ag
 
 This repository is optimized for autonomous AI agents (such as Antigravity, Claude Code, Cursor, etc.). Refer to **[`AGENTS.md`](file:///Users/brandonmartel/code/django-lightning/AGENTS.md)** for master guidelines.
 
-### Available Agent Skills in `.agents/`:
-1. **[`django-bolt-core`](file:///.agents/django-bolt-core/SKILL.md)**: `BoltAPI` configuration, routes, parameter extraction (`Query`, `Path`, `Header`, `Cookie`, `Form`, `File`, `Body`, `Depends`), response types.
-2. **[`django-bolt-schemas-serializers`](file:///.agents/django-bolt-schemas-serializers/SKILL.md)**: `msgspec.Struct`, `Serializer` validation, field & model validators.
-3. **[`django-bolt-auth-security`](file:///.agents/django-bolt-auth-security/SKILL.md)**: Custom User Model, JWT authentication, permission guards (`@guard`), CORS, rate limiting.
-4. **[`django-bolt-async-orm-db`](file:///.agents/django-bolt-async-orm-db/SKILL.md)**: Async Django ORM (`aget`, `acreate`, `afilter`), PostgreSQL connection pooling.
-5. **[`django-bolt-realtime-mcp`](file:///.agents/django-bolt-realtime-mcp/SKILL.md)**: SSE streaming, WebSockets, and `bolt-mcp` MCP Server implementation.
-6. **[`django-bolt-background-workers`](file:///.agents/django-bolt-background-workers/SKILL.md)**: Ultra-high-throughput async queue worker engine (`SAQ` + Redis) with 10,000+ jobs/sec and ~30MB RAM footprint.
-7. **[`django-bolt-testing-observability`](file:///.agents/django-bolt-testing-observability/SKILL.md)**: In-memory `TestClient` tests, `pytest-asyncio`, OpenAPI docs, logging/timing middleware.
-8. **[`django-bolt-docker`](file:///.agents/django-bolt-docker/SKILL.md)**: Production `Dockerfile`, `.dockerignore`, and `docker-compose.yml`.
-9. **[`django-bolt-kubernetes`](file:///.agents/django-bolt-kubernetes/SKILL.md)**: Production Kubernetes manifests in `k8s/` (Deployment, Service, Ingress, HPA).
-10. **[`django-bolt-fly-io`](file:///.agents/django-bolt-fly-io/SKILL.md)**: Fly.io deployment config `fly.toml` & Fly Postgres integration.
-11. **[`django-bolt-migration`](file:///.agents/django-bolt-migration/SKILL.md)**: Migration guides from FastAPI, DRF, and Django Ninja to Django-Bolt.
+### Available Agent Skills in `.agents/skills/`:
+1. **[`django-bolt-core`](file:///.agents/skills/django-bolt-core/SKILL.md)**: `BoltAPI` configuration, routes, parameter extraction (`Query`, `Path`, `Header`, `Cookie`, `Form`, `File`, `Body`, `Depends`), response types.
+2. **[`django-bolt-schemas-serializers`](file:///.agents/skills/django-bolt-schemas-serializers/SKILL.md)**: `msgspec.Struct`, `Serializer` validation, field & model validators.
+3. **[`django-bolt-auth-security`](file:///.agents/skills/django-bolt-auth-security/SKILL.md)**: Custom User Model, JWT authentication, permission guards (`@guard`), CORS, rate limiting.
+4. **[`django-bolt-async-orm-db`](file:///.agents/skills/django-bolt-async-orm-db/SKILL.md)**: Async Django ORM (`aget`, `acreate`, `afilter`), PostgreSQL connection pooling.
+5. **[`django-bolt-realtime-mcp`](file:///.agents/skills/django-bolt-realtime-mcp/SKILL.md)**: SSE streaming, WebSockets, and `bolt-mcp` MCP Server implementation.
+6. **[`django-bolt-background-workers`](file:///.agents/skills/django-bolt-background-workers/SKILL.md)**: Ultra-high-throughput async queue worker engine (`SAQ` + Redis) with 10,000+ jobs/sec and ~30MB RAM footprint.
+7. **[`django-bolt-testing-observability`](file:///.agents/skills/django-bolt-testing-observability/SKILL.md)**: In-memory `TestClient` tests, `pytest-asyncio`, OpenAPI docs, logging/timing middleware.
+8. **[`django-bolt-docker`](file:///.agents/skills/django-bolt-docker/SKILL.md)**: Production `Dockerfile`, `.dockerignore`, and `docker-compose.yml`.
+9. **[`django-bolt-kubernetes`](file:///.agents/skills/django-bolt-kubernetes/SKILL.md)**: Production Kubernetes manifests in `k8s/` (Deployment, Service, Ingress, HPA).
+10. **[`django-bolt-fly-io`](file:///.agents/skills/django-bolt-fly-io/SKILL.md)**: Fly.io deployment config `fly.toml` & Fly Postgres integration.
+11. **[`django-bolt-migration`](file:///.agents/skills/django-bolt-migration/SKILL.md)**: Migration guides from FastAPI, DRF, and Django Ninja to Django-Bolt.
+12. **[`agentic-task-orchestration`](file:///.agents/skills/agentic-task-orchestration/SKILL.md)**: Autonomous worktree creation, task implementation, CI pipeline monitoring, automated PR creation, review, and safe backlog merging.
 
 ---
 

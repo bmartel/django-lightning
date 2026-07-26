@@ -66,3 +66,7 @@ staticfiles/
 
 # Temporary scratch
 scratch/
+
+# Worktrees
+.worktrees/
+

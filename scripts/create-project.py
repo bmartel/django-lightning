@@ -27,6 +27,7 @@ IGNORED_DIRS = {
     "scratch",
     "build",
     "dist",
+    ".worktrees",
 }
 
 IGNORED_FILES = {
