@@ -128,7 +128,6 @@ class UserCreateSerializer(Serializer):
     username: Annotated[str, msgspec.Meta(min_length=3)]
     email: str
 
-    @classmethod
     @field_validator("email")
     def validate_email(cls, value: str) -> str:
         if "@" not in value:

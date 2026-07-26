@@ -46,3 +46,48 @@ def test_user_registration_login_and_profile_update():
     )
     assert patch_resp.status_code == 200
     assert patch_resp.json()["bio"] == "Django-Bolt Enthusiast"
+
+
+@pytest.mark.django_db
+def test_registration_validation_rules():
+    client = TestClient(api)
+
+    # Test short username
+    resp = client.post(
+        "/api/auth/register",
+        json={"username": "al", "email": "al@example.com", "password": "password123"},
+    )
+    assert resp.status_code == 422 or resp.status_code == 400
+
+    # Test empty username
+    resp = client.post(
+        "/api/auth/register",
+        json={"username": "   ", "email": "al@example.com", "password": "password123"},
+    )
+    assert resp.status_code in (400, 422)
+
+    # Test malformed email
+    resp = client.post(
+        "/api/auth/register",
+        json={"username": "validuser", "email": "not-an-email", "password": "password123"},
+    )
+    assert resp.status_code in (400, 422)
+
+    # Test short password
+    resp = client.post(
+        "/api/auth/register",
+        json={"username": "validuser", "email": "valid@example.com", "password": "short"},
+    )
+    assert resp.status_code in (400, 422)
+
+    # Test invalid avatar URL
+    resp = client.post(
+        "/api/auth/register",
+        json={
+            "username": "validuser",
+            "email": "valid@example.com",
+            "password": "password123",
+            "avatar_url": "ftp://invalid-scheme.com/pic.png",
+        },
+    )
+    assert resp.status_code in (400, 422)

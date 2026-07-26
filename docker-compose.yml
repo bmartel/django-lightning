@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
     command: uv run manage.py migrate --noinput
     volumes:
       - .:/app
@@ -20,6 +21,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
     command: uv run manage.py runbolt --host 0.0.0.0 --port 8000 --dev
     volumes:
       - .:/app
@@ -37,11 +39,11 @@ services:
       redis:
         condition: service_healthy
 
-
   worker:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
     command: uv run saq app.tasks.settings
     volumes:
       - .:/app

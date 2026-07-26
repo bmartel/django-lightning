@@ -20,11 +20,14 @@ spec:
       labels:
         app: django-lightning
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
       containers:
       - name: api
         image: django-lightning:latest
         imagePullPolicy: IfNotPresent
-        command: ["uv", "run", "manage.py", "runbolt", "--host", "0.0.0.0", "--port", "8000", "--processes", "4"]
+        command: ["python", "manage.py", "runbolt", "--host", "0.0.0.0", "--port", "8000", "--processes", "4"]
         ports:
         - containerPort: 8000
           name: http

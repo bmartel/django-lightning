@@ -35,7 +35,6 @@ list-async-migrations:
 async-migrate name="":
     {{ if name == "" { "uv run manage.py async_migrate --all" } else { "uv run manage.py async_migrate --run " + name } }}
 
-
 # Create a Django Admin superuser via uv
 createsuperuser:
     uv run manage.py createsuperuser
@@ -56,25 +55,37 @@ lint:
 format:
     uv run ruff format .
 
-# Start local services with docker-compose
-docker-up:
-    docker compose up --build -d
+# Start local dev services with docker-compose
+docker-dev:
+    docker compose up --build
+
+# Start production stack locally with docker-compose.prod.yml
+docker-prod:
+    docker compose -f docker-compose.prod.yml up --build
 
 # Stop local docker services
 docker-down:
     docker compose down -v
 
-# Build docker image locally
+# Build production docker image locally (target: runner)
 docker-build:
-    docker build -t django-lightning:latest .
+    docker build --target runner -t django-lightning:latest .
+
+# Build development docker image locally (target: dev)
+docker-build-dev:
+    docker build --target dev -t django-lightning:dev .
 
 # Deploy to Fly.io
 deploy-fly:
     fly deploy
 
-# Apply Kubernetes manifests
+# Apply production Kubernetes manifests
 k8s-apply:
     kubectl apply -f k8s/
+
+# Apply local development Kubernetes manifests
+k8s-dev:
+    kubectl apply -k k8s/dev
 
 # Run Kubernetes pre-rollout schema migration job
 k8s-migrate:
@@ -83,4 +94,3 @@ k8s-migrate:
 # Delete Kubernetes manifests
 k8s-delete:
     kubectl delete -f k8s/
-

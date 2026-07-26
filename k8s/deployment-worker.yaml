@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-lightning-worker
+  labels:
+    app: django-lightning
+    component: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: django-lightning
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: django-lightning
+        component: worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      containers:
+      - name: worker
+        image: django-lightning:latest
+        imagePullPolicy: IfNotPresent
+        command: ["python", "-m", "saq", "app.tasks.settings"]
+        envFrom:
+        - configMapRef:
+            name: django-lightning-config
+        - secretRef:
+            name: django-lightning-secret
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"

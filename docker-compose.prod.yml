@@ -1,0 +1,82 @@
+version: "3.8"
+
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    command: python manage.py migrate --noinput
+    environment:
+      - DEBUG=0
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    command: python manage.py runbolt --host 0.0.0.0 --port 8000 --processes 4
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=0
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    command: python -m saq app.tasks.settings
+    environment:
+      - DEBUG=0
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lightning}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lightningpass}
+      POSTGRES_DB: ${POSTGRES_DB:-lightningdb}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lightning} -d ${POSTGRES_DB:-lightningdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: always
+
+volumes:
+  postgres_data:
