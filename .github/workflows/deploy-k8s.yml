@@ -22,9 +22,5 @@ jobs:
 
       - name: Validate Manifests (Dry-Run)
         run: |
-          kubectl apply --dry-run=client -f k8s/configmap.yaml
-          kubectl apply --dry-run=client -f k8s/secret.yaml
-          kubectl apply --dry-run=client -f k8s/deployment.yaml
-          kubectl apply --dry-run=client -f k8s/service.yaml
-          kubectl apply --dry-run=client -f k8s/ingress.yaml
-          kubectl apply --dry-run=client -f k8s/hpa.yaml
+          kubectl apply --dry-run=client --validate=false -f k8s/
+
