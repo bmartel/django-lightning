@@ -46,6 +46,14 @@ Welcome agent. This repository is **django-lightning**, a high-performance start
 - **WebSockets & SSE**: Use `@api.get(...)` returning `StreamingResponse` for SSE, or `@api.websocket(...)` for WebSockets.
 - **bolt-mcp**: MCP server tools, resources, and prompts are mounted at `/mcp` using `api.mount_mcp(mcp)` via the `bolt-mcp` package.
 
+### 7. Zero-Downtime Rolling Deployments & Async Migration Management
+- **Never run heavy data backfills in container init scripts or release locks**: Init containers block rolling updates and cause timeouts or table lockouts.
+- **2-Phase Migration Paradigm**:
+  1. **Pre-rollout Schema DDL**: Run `uv run manage.py migrate` via standalone jobs (`k8s/job-migration.yaml` or Fly `release_command`).
+  2. **Post-rollout Async DML Data Backfill**: Use `uv run manage.py async_migrate` or SAQ background worker (`run_async_migration_task`) to run data backfills in non-blocking batches.
+- **Async Migration Subsystem**: All background migrations inherit from `BaseAsyncMigration` in `app/async_migrations/` and track progress in `app.models.AsyncMigration`.
+
+
 ---
 
 ## 🛠 AVAILABLE AGENT SKILLS INDEX (`.agents/`)

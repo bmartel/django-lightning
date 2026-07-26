@@ -50,4 +50,18 @@ spec:
             path: /health
             port: http
           initialDelaySeconds: 5
+
+
+## Zero-Downtime Migration Strategy in Kubernetes
+
+1. **Pre-rollout Synchronous DDL Schema Migration**:
+   - Run the dedicated Kubernetes Migration Job before triggering deployment updates:
+     `kubectl apply -f k8s/job-migration.yaml`
+2. **Rolling Update Deployment**:
+   - Apply deployment changes with zero unavailable pods (`maxUnavailable: 0`):
+     `kubectl apply -f k8s/deployment.yaml`
+3. **Post-rollout Asynchronous DML Data Migration**:
+   - Enqueue background data backfills via SAQ background worker:
+     `uv run manage.py async_migrate --enqueue <migration_name>`
+
 ```

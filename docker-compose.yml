@@ -1,6 +1,21 @@
 version: "3.8"
 
 services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uv run manage.py migrate --noinput
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=dev-secret-key-change-in-production-1234567890
+      - DATABASE_URL=postgres://lightning:lightningpass@db:5432/lightningdb
+    depends_on:
+      db:
+        condition: service_healthy
+
   web:
     build:
       context: .
@@ -21,6 +36,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
 
   worker:
     build:

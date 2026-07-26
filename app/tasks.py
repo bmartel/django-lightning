@@ -36,12 +36,73 @@ async def cleanup_expired_sessions(ctx):
     return {"status": "cleaned"}
 
 
+async def run_async_migration_task(ctx, migration_name: str, batch_size: int | None = None):
+    """SAQ background task to execute a registered async data migration."""
+    from app.async_migrations.base import (
+        discover_async_migrations,
+        get_registered_async_migrations,
+    )
+
+    discover_async_migrations()
+    registered = get_registered_async_migrations()
+
+    # Code Readiness Guard: Defer cleanly if worker is running an older code version
+    if migration_name not in registered:
+        return {
+            "status": "deferred",
+            "message": (
+                f"Worker process is running older code version. "
+                f"Migration '{migration_name}' not loaded yet. Postponing until rollout completes."
+            ),
+        }
+
+    migration_cls = registered[migration_name]
+    instance = migration_cls()
+    result = await instance.run(override_batch_size=batch_size)
+    return {
+        "status": result.status,
+        "name": result.name,
+        "processed_count": result.processed_count,
+        "total_count": result.total_count,
+        "error_message": result.error_message,
+    }
+
+
+async def process_pending_async_migrations(ctx):
+    """SAQ cron job executing periodically to process pending or deferred async migrations."""
+    from app.async_migrations.base import (
+        discover_async_migrations,
+        get_registered_async_migrations,
+    )
+    from app.models import AsyncMigration
+
+    discover_async_migrations()
+    registered = get_registered_async_migrations()
+    results = []
+
+    pending_records = AsyncMigration.objects.filter(
+        status__in=[AsyncMigration.STATUS_PENDING, AsyncMigration.STATUS_DEFERRED]
+    )
+    async for record in pending_records:
+        if record.name in registered:
+            instance = registered[record.name]()
+            res = await instance.run()
+            results.append({"name": record.name, "status": res.status})
+
+    return {"processed_count": len(results), "results": results}
+
+
 # SAQ Worker Runner Configuration
 settings = {
     "queue": queue,
-    "functions": [send_welcome_email],
+    "functions": [
+        send_welcome_email,
+        run_async_migration_task,
+        process_pending_async_migrations,
+    ],
     "cron": [
         CronJob(cleanup_expired_sessions, cron="0 * * * *"),  # Runs hourly
+        CronJob(process_pending_async_migrations, cron="*/5 * * * *"),  # Runs every 5 minutes
     ],
     "concurrency": 100,  # 100 concurrent async jobs in a single worker process
 }

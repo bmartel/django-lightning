@@ -1,0 +1,36 @@
+# Dedicated Kubernetes Migration Job for Pre-Rollout Synchronous DDL Migrations
+# Run before applying Deployment rollout: kubectl apply -f k8s/job-migration.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: django-lightning-schema-migrate
+  labels:
+    app: django-lightning
+    component: migration
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: django-lightning
+        component: migration
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: schema-migrate
+        image: django-lightning:latest
+        imagePullPolicy: IfNotPresent
+        command: ["uv", "run", "manage.py", "migrate", "--noinput"]
+        envFrom:
+        - configMapRef:
+            name: django-lightning-config
+        - secretRef:
+            name: django-lightning-secret
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"

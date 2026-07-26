@@ -17,7 +17,9 @@ Equipped with a **Custom User Model** ready out of the box, a comprehensive set 
 - **🤖 Built-in MCP Server (`bolt-mcp`)**: Native Streamable HTTP Model Context Protocol server mounted at `/mcp` exposing tools, resources, and prompts to AI clients (Claude Desktop, MCP Inspector, etc.).
 - **📦 Ultra-Fast Data Validation**: Uses `msgspec.Struct` (10-20x faster than Pydantic) and `django_bolt.serializers.Serializer`.
 - **🔄 Async-First ORM**: Leverages Django's native async ORM (`aget`, `acreate`, `afilter`, `aupdate`, `adelete`).
+- **🔀 Built-in Async Migrations**: Native background data backfill framework (`BaseAsyncMigration`, `python manage.py async_migrate`, and SAQ worker integration) for zero-downtime rolling deployments.
 - **📡 Realtime & Streaming**: Server-Sent Events (SSE) and chunked streaming endpoints.
+
 - **📚 Interactive API Docs**: Built-in Scalar OpenAPI interface rendered at `/docs`.
 - **🛠 Comprehensive Developer Experience**: Managed via `justfile` using `uv` shortcuts.
 - **🐳 Multi-Stage Docker**: Production-optimized multi-stage Dockerfile using `uv`.
@@ -103,7 +105,35 @@ Access the application:
 
 ---
 
+## 🔀 Async Migration Management & Zero-Downtime Rollouts
+
+In high-availability production environments, long-running data backfills cause table locks or deployment timeouts when executed inside pod init containers or release hooks.
+
+`django-lightning` decouples schema migrations (DDL) from data migrations (DML):
+
+1. **Pre-rollout Schema DDL**: Executed synchronously before pod updates via `k8s/job-migration.yaml` or Fly `release_command`.
+2. **Rolling Deployment**: Updates application pods without downtime (`maxUnavailable: 0`).
+3. **Post-rollout Async DML**: Long-running data backfills run non-blockingly via `BaseAsyncMigration` and SAQ workers.
+
+```bash
+# List all registered async background data migrations and status
+uv run manage.py async_migrate --list
+
+# Run an async data migration in the foreground
+uv run manage.py async_migrate --run 0001_example_backfill
+
+# Enqueue an async data migration to the SAQ background worker process
+uv run manage.py async_migrate --enqueue 0001_example_backfill
+
+# Run using just shortcuts
+just list-async-migrations
+just async-migrate 0001_example_backfill
+```
+
+---
+
 ## 🤖 Agentic Capabilities & Skills
+
 
 This repository is optimized for autonomous AI agents (such as Antigravity, Claude Code, Cursor, etc.). Refer to **[`AGENTS.md`](file:///Users/brandonmartel/code/django-lightning/AGENTS.md)** for master guidelines.
 

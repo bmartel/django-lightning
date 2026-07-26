@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from app.models import User
+from app.models import AsyncMigration, User
 
 
 @admin.register(User)
@@ -27,4 +27,32 @@ class UserAdmin(BaseUserAdmin):
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         ("Profile Information", {"fields": ("bio", "avatar_url")}),
+    )
+
+
+@admin.register(AsyncMigration)
+class AsyncMigrationAdmin(admin.ModelAdmin):
+    """Admin configuration for tracking background async data migrations."""
+
+    list_display = (
+        "name",
+        "status",
+        "processed_count",
+        "total_count",
+        "batch_size",
+        "started_at",
+        "completed_at",
+    )
+    list_filter = ("status", "created_at")
+    search_fields = ("name", "error_message")
+    readonly_fields = (
+        "name",
+        "status",
+        "processed_count",
+        "total_count",
+        "error_message",
+        "started_at",
+        "completed_at",
+        "created_at",
+        "updated_at",
     )

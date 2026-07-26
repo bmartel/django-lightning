@@ -355,3 +355,47 @@ When converting an existing application to `django-lightning` (Django-Bolt):
    Run with `uv run manage.py runbolt --dev` locally and `uv run manage.py runbolt --host 0.0.0.0 --port 8000 --processes 4` in production containers.
 7. **Run Verification**:
    Execute `uv run manage.py check`, `uv run ruff check .`, and `uv run pytest -v`.
+
+---
+
+## Part 5: Managing Database Migrations for Zero-Downtime Rollouts
+
+When migrating database schemas and data in production:
+
+1. **Decouple DDL from DML**:
+   - Fast schema changes (DDL) run pre-rollout via `uv run manage.py migrate`.
+   - Long-running data backfills (DML) run post-rollout via `BaseAsyncMigration`.
+
+2. **Concurrent Index Creation (`atomic = False`)**:
+   PostgreSQL `CREATE INDEX CONCURRENTLY` cannot run inside a transaction block. Set `atomic = False` on the migration class:
+   ```python
+   from django.contrib.postgres.operations import AddIndexConcurrently
+   from django.db import migrations, models
+
+
+   class Migration(migrations.Migration):
+       atomic = False
+
+       operations = [
+           AddIndexConcurrently(
+               model_name="user",
+               index=models.Index(fields=["email"], name="user_email_concurrent_idx"),
+           ),
+       ]
+   ```
+
+3. **Integrating Async Migrations into Django Migrations**:
+   Use `RunAsyncMigration("migration_name", sync=False)` to bind an async migration to a standard Django migration file:
+   ```python
+   from django.db import migrations
+   from app.async_migrations.operations import RunAsyncMigration
+
+
+   class Migration(migrations.Migration):
+       dependencies = [("app", "0002_asyncmigration")]
+
+       operations = [
+           RunAsyncMigration("0001_example_backfill", sync=False),
+       ]
+   ```
+

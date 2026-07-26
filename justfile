@@ -27,6 +27,15 @@ migrate:
 makemigrations:
     uv run manage.py makemigrations
 
+# List status of all registered async background data migrations
+list-async-migrations:
+    uv run manage.py async_migrate --list
+
+# Run or enqueue an async background data migration
+async-migrate name="":
+    {{ if name == "" { "uv run manage.py async_migrate --all" } else { "uv run manage.py async_migrate --run " + name } }}
+
+
 # Create a Django Admin superuser via uv
 createsuperuser:
     uv run manage.py createsuperuser
@@ -67,6 +76,11 @@ deploy-fly:
 k8s-apply:
     kubectl apply -f k8s/
 
+# Run Kubernetes pre-rollout schema migration job
+k8s-migrate:
+    kubectl apply -f k8s/job-migration.yaml
+
 # Delete Kubernetes manifests
 k8s-delete:
     kubectl delete -f k8s/
+

@@ -102,3 +102,14 @@ worker:
     - redis
     - db
 ```
+
+---
+
+## 🛡 WORKER CODE READINESS & DEFERRED ASYNC MIGRATIONS
+
+During zero-downtime rolling deployments, background workers may be executing tasks mid-rollout while running older code versions:
+
+1. **Code Readiness Guard**: `run_async_migration_task` checks if the target `BaseAsyncMigration` class is present in Python runtime. If absent (old worker image), it defers execution (`STATUS_DEFERRED`) without raising fatal exceptions or marking tasks as `FAILED`.
+2. **Periodic Auto-Discovery**: `process_pending_async_migrations` runs every 5 minutes (or on worker startup) to automatically pick up `STATUS_PENDING` and `STATUS_DEFERRED` migrations once new worker pods finish deploying.
+3. **Dependency Ordering**: `BaseAsyncMigration.check_dependencies_met()` verifies that prerequisite Django schema migrations and prior async migrations are applied before processing batches.
+

@@ -68,4 +68,20 @@ services:
     image: redis:7-alpine
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
+
+## Migration Service Pattern
+
+To run database migrations cleanly prior to launching services in Docker Compose:
+```yaml
+  migrate:
+    build: .
+    command: uv run manage.py migrate --noinput
+    environment:
+      - DATABASE_URL=postgres://lightning:lightningpass@db:5432/lightningdb
+    depends_on:
+      db:
+        condition: service_healthy
+```
+Run pre-start migrations with `docker compose run --rm migrate` or `docker compose up --build`.
+
 ```

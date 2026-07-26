@@ -6,6 +6,10 @@ primary_region = "iad"
 [build]
   dockerfile = "Dockerfile"
 
+[deploy]
+  release_command = "uv run manage.py migrate --noinput"
+
+
 [env]
   DJANGO_SETTINGS_MODULE = "config.settings"
   ALLOWED_HOSTS = ".fly.dev"
