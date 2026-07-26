@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.4.1 (2026-07-26)
+
+### Bug Fixes
+
+- **profiling**: Add user_date_joined_idx index and enhance SQLite/Postgres EXPLAIN parser
+  ([`f741086`](https://github.com/bmartel/django-lightning/commit/f74108644e8bdc2b8752e840215d803641efc6b7))
+
+
 ## v0.4.0 (2026-07-26)
 
 ### Features
