@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.5 (2026-07-26)
+
+### Bug Fixes
+
+- **ci**: Pass --allow-dirty to cargo publish to allow updated lockfile in release workflow
+  ([`2e3f9b5`](https://github.com/bmartel/django-lightning/commit/2e3f9b5cd5beefaab8aef771567ec389f00a8a79))
+
+
 ## v0.3.4 (2026-07-26)
 
 ### Bug Fixes
