@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.1 (2026-07-26)
+
+### Bug Fixes
+
+- **ci**: Fix invalid action versions and track Cargo.toml version in semantic release
+  ([`f6c7195`](https://github.com/bmartel/django-lightning/commit/f6c7195449140586bbc300dba7c2772984258662))
+
+
 ## v0.3.0 (2026-07-26)
 
 ### Bug Fixes
