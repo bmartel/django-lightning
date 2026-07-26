@@ -130,7 +130,7 @@ django-lightning/
 │   └── wsgi.py
 │
 ├── app/                                 # Main application code
-│   ├── main.py                          # BoltAPI initialization & route mounting
+│   ├── api.py                           # BoltAPI initialization & route mounting
 │   ├── models.py                        # Custom User Model (AbstractUser) out of the box
 │   ├── auth.py                          # JWT authentication utilities
 │   ├── tasks.py                         # High-performance SAQ background tasks

@@ -16,7 +16,7 @@ Use `django_bolt.testing.TestClient` to execute lightweight, in-memory requests 
 ```python
 import pytest
 from django_bolt.testing import TestClient
-from app.main import api
+from app.api import api
 
 
 @pytest.mark.django_db
