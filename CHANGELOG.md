@@ -1,0 +1,322 @@
+# CHANGELOG
+
+
+## v0.3.0 (2026-07-26)
+
+### Bug Fixes
+
+- **ci**: Add --validate=false to kubectl dry-run in deploy-k8s workflow
+  ([`df84516`](https://github.com/bmartel/django-lightning/commit/df845165881467f453a60b61b8625841969642c2))
+
+- **ci**: Enable semantic release workflow for bmartel/django-lightning repository
+  ([`3430b7d`](https://github.com/bmartel/django-lightning/commit/3430b7da767e9717373af76a34d7781806fe6973))
+
+- **ci**: Fix build_command type in pyproject.toml for semantic release v9
+  ([`f04e5b6`](https://github.com/bmartel/django-lightning/commit/f04e5b655fed90f7f600a8b960e53d379b013015))
+
+- **ci**: Use offline YAML validation & kube-linter in deploy-k8s workflow
+  ([`a8cf18c`](https://github.com/bmartel/django-lightning/commit/a8cf18cc0ef30ea8be933356cb2bf1c68bc46d76))
+
+- **cli**: Add collectstatic step to scaffolding next steps instructions
+  ([`6562535`](https://github.com/bmartel/django-lightning/commit/6562535a082b153b853757de3d2474ad2987abc6))
+
+- **docker**: Remove README.md from .dockerignore for build context availability
+  ([`d87b2d4`](https://github.com/bmartel/django-lightning/commit/d87b2d454c01e2c96f5e55c6b8a48579f0d1b17b))
+
+- **starter**: Move BoltAPI instance to app/api.py for runbolt autodiscovery
+  ([`91caf3d`](https://github.com/bmartel/django-lightning/commit/91caf3d487e9e78cc6dc28fd18256975a28b3416))
+
+### Chores
+
+- **deps**: Bump azure/setup-kubectl from 4 to 5
+  ([#13](https://github.com/bmartel/django-lightning/pull/13),
+  [`b38a5a0`](https://github.com/bmartel/django-lightning/commit/b38a5a0d9029af2c7d54fa76b694324d2cf254c8))
+
+Bumps [azure/setup-kubectl](https://github.com/azure/setup-kubectl) from 4 to 5. - [Release
+  notes](https://github.com/azure/setup-kubectl/releases) -
+  [Changelog](https://github.com/Azure/setup-kubectl/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/azure/setup-kubectl/compare/v4...v5)
+
+--- updated-dependencies: - dependency-name: azure/setup-kubectl dependency-version: '5'
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+### Continuous Integration
+
+- Auto-approve dependabot PRs and grant workflow permissions
+  ([`d1dfe4d`](https://github.com/bmartel/django-lightning/commit/d1dfe4d15fdc29f4ceaee7c710e267d486f5293f))
+
+- Remove approval step from dependabot automerge
+  ([`47912eb`](https://github.com/bmartel/django-lightning/commit/47912eb6e19e166176d095101776c61aee14f025))
+
+- Use ADMIN_PAT secret in dependabot auto-merge workflow
+  ([`99e7a08`](https://github.com/bmartel/django-lightning/commit/99e7a08fddb90ea08bbcf2898fc3af65b18306cd))
+
+- **release**: Use ADMIN_PAT secret to bypass branch protection in semantic release workflow
+  ([`f2d3c67`](https://github.com/bmartel/django-lightning/commit/f2d3c6724cbf00b250421019a2e74ebcaaea94fd))
+
+### Features
+
+- Add built-in async migration management & zero-downtime deployment capabilities
+  ([`a839761`](https://github.com/bmartel/django-lightning/commit/a8397613fa220bd24594ba5eef25647ec64a2972))
+
+- **infra**: Optimize production Dockerfile, add user validation, and add dev/prod Compose and K8s
+  manifests
+  ([`c7ca832`](https://github.com/bmartel/django-lightning/commit/c7ca832a4871627846bbbde886ab8bfa61eafd27))
+
+- **installer**: Add Windows PowerShell standalone 1-line installer script
+  ([`432edfc`](https://github.com/bmartel/django-lightning/commit/432edfccfdf8a571b74af2ff678beabd01059033))
+
+- **utils**: Add akeyset_chunker for high-throughput batching and PgBouncer safety
+  ([`4c58ae6`](https://github.com/bmartel/django-lightning/commit/4c58ae64618807805aa400cf49c7cfac9e863b5e))
+
+
+## v0.2.3 (2026-07-25)
+
+### Bug Fixes
+
+- Dependabot automerge without self-review approval requirement
+  ([`214b5cf`](https://github.com/bmartel/django-lightning/commit/214b5cf0d8f666ce0ece6321bbdf234102e704c9))
+
+### Chores
+
+- **deps**: Bump actions/checkout from 4 to 7
+  ([#1](https://github.com/bmartel/django-lightning/pull/1),
+  [`1865005`](https://github.com/bmartel/django-lightning/commit/186500537eba7cb106ac9c8524f629d7cc2f74b5))
+
+Bumps [actions/checkout](https://github.com/actions/checkout) from 4 to 7. - [Release
+  notes](https://github.com/actions/checkout/releases) -
+  [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/actions/checkout/compare/v4...v7)
+
+--- updated-dependencies: - dependency-name: actions/checkout dependency-version: '7'
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump astral-sh/setup-uv from 3 to 7
+  ([#4](https://github.com/bmartel/django-lightning/pull/4),
+  [`a01ad06`](https://github.com/bmartel/django-lightning/commit/a01ad06bc621060257e8f4bf0ddbb9082112a9ff))
+
+Bumps [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) from 3 to 7. - [Release
+  notes](https://github.com/astral-sh/setup-uv/releases) -
+  [Commits](https://github.com/astral-sh/setup-uv/compare/v3...v7)
+
+--- updated-dependencies: - dependency-name: astral-sh/setup-uv dependency-version: '7'
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump colored from 2.2.0 to 3.1.1 in /cli
+  ([#5](https://github.com/bmartel/django-lightning/pull/5),
+  [`6ec9a60`](https://github.com/bmartel/django-lightning/commit/6ec9a605038a83a2cf758423bfb704b123e6c2d1))
+
+Bumps [colored](https://github.com/mackwic/colored) from 2.2.0 to 3.1.1. - [Release
+  notes](https://github.com/mackwic/colored/releases) -
+  [Changelog](https://github.com/colored-rs/colored/blob/master/CHANGELOG.md) -
+  [Commits](https://github.com/mackwic/colored/compare/v2.2.0...v3.1.1)
+
+--- updated-dependencies: - dependency-name: colored dependency-version: 3.1.1
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump dialoguer from 0.11.0 to 0.12.0 in /cli
+  ([#6](https://github.com/bmartel/django-lightning/pull/6),
+  [`0ae26ef`](https://github.com/bmartel/django-lightning/commit/0ae26efe160136b3165a52caf62b1cb39897ce0c))
+
+Bumps [dialoguer](https://github.com/console-rs/dialoguer) from 0.11.0 to 0.12.0. - [Release
+  notes](https://github.com/console-rs/dialoguer/releases) -
+  [Changelog](https://github.com/console-rs/dialoguer/blob/main/CHANGELOG-OLD.md) -
+  [Commits](https://github.com/console-rs/dialoguer/compare/v0.11.0...v0.12.0)
+
+--- updated-dependencies: - dependency-name: dialoguer dependency-version: 0.12.0
+
+dependency-type: direct:production
+
+update-type: version-update:semver-minor ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Update dj-database-url requirement from >=2.2.0 to >=3.1.2
+  ([#9](https://github.com/bmartel/django-lightning/pull/9),
+  [`61d32c9`](https://github.com/bmartel/django-lightning/commit/61d32c9641cd102f79a910d5520d99dcabc8a1d9))
+
+Updates the requirements on [dj-database-url](https://github.com/jazzband/dj-database-url) to permit
+  the latest version. - [Release notes](https://github.com/jazzband/dj-database-url/releases) -
+  [Changelog](https://github.com/jazzband/dj-database-url/blob/master/CHANGELOG.md) -
+  [Commits](https://github.com/jazzband/dj-database-url/compare/v2.2.0...v3.1.2)
+
+--- updated-dependencies: - dependency-name: dj-database-url dependency-version: 3.1.2
+
+dependency-type: direct:production ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps-dev**: Update pytest-asyncio requirement
+  ([#11](https://github.com/bmartel/django-lightning/pull/11),
+  [`30e91ed`](https://github.com/bmartel/django-lightning/commit/30e91ed1fe51fa1e69dbc0dbfb8814aca00ef100))
+
+Updates the requirements on [pytest-asyncio](https://github.com/pytest-dev/pytest-asyncio) to permit
+  the latest version. - [Release notes](https://github.com/pytest-dev/pytest-asyncio/releases) -
+  [Commits](https://github.com/pytest-dev/pytest-asyncio/compare/v0.23.0...v1.4.0)
+
+--- updated-dependencies: - dependency-name: pytest-asyncio dependency-version: 1.4.0
+
+dependency-type: direct:development ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps-dev**: Update pytest-django requirement
+  ([#10](https://github.com/bmartel/django-lightning/pull/10),
+  [`7479eb7`](https://github.com/bmartel/django-lightning/commit/7479eb760ff22b9790c85d26bf51390444c68c5d))
+
+Updates the requirements on [pytest-django](https://github.com/pytest-dev/pytest-django) to permit
+  the latest version. - [Release notes](https://github.com/pytest-dev/pytest-django/releases) -
+  [Changelog](https://github.com/pytest-dev/pytest-django/blob/main/docs/changelog.rst) -
+  [Commits](https://github.com/pytest-dev/pytest-django/compare/v4.8.0...v4.12.0)
+
+--- updated-dependencies: - dependency-name: pytest-django dependency-version: 4.12.0
+
+dependency-type: direct:development ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+### Features
+
+- Add automated semantic release workflow for applications and exclude CLI artifacts from
+  scaffolding
+  ([`c747708`](https://github.com/bmartel/django-lightning/commit/c74770873aa02fb1fc9beacd67915ebfcac1783e))
+
+
+## v0.2.1 (2026-07-25)
+
+### Bug Fixes
+
+- 2-stage atomic release pipeline and dependabot pull_request_target permissions
+  ([`e374375`](https://github.com/bmartel/django-lightning/commit/e374375c1cb480100aa74c3db2827d884e7e5d2a))
+
+
+## v0.2.0 (2026-07-25)
+
+### Documentation
+
+- Finalize comprehensive agent skills index and directory tree documentation
+  ([`4b2c08e`](https://github.com/bmartel/django-lightning/commit/4b2c08ec633fba064e6792e502e1b07ca58df0ca))
+
+
+## v0.1.9 (2026-07-25)
+
+### Features
+
+- Ultra-high-throughput async SAQ background worker queue integration
+  ([`a3534bd`](https://github.com/bmartel/django-lightning/commit/a3534bdc38a1a629306cc3d2be29a9d836dcc3cb))
+
+
+## v0.1.8 (2026-07-25)
+
+### Features
+
+- Add dependabot configuration and dependabot auto-merge workflow
+  ([`d312b9f`](https://github.com/bmartel/django-lightning/commit/d312b9fb53d4ab92a2567cfa704fef18e21aef7c))
+
+
+## v0.1.7 (2026-07-25)
+
+### Bug Fixes
+
+- Change fly deployment workflow trigger to manual dispatch and bump crate version to 0.1.7
+  ([`d0c7ff3`](https://github.com/bmartel/django-lightning/commit/d0c7ff3cc6c2962dcd2f4e42e878f86def9852b0))
+
+
+## v0.1.6 (2026-07-25)
+
+### Features
+
+- Preconfigured github workflows for CI/CD, fly.io, and kubernetes
+  ([`e2c86bd`](https://github.com/bmartel/django-lightning/commit/e2c86bd637ba5ccda1336772936bd172376d6302))
+
+
+## v0.1.5 (2026-07-25)
+
+### Bug Fixes
+
+- Robust directory check for existing empty and non-empty destination paths
+  ([`56b4374`](https://github.com/bmartel/django-lightning/commit/56b437424e246c8e925e5e6c40210b1a7728122f))
+
+
+## v0.1.4 (2026-07-25)
+
+### Bug Fixes
+
+- Template resolution when running create-django-bolt outside template workspace
+  ([`4409d3b`](https://github.com/bmartel/django-lightning/commit/4409d3b01cc25944f99319504d445bb40e818add))
+
+
+## v0.1.3 (2026-07-25)
+
+### Bug Fixes
+
+- Install to user local bin directory without requiring sudo
+  ([`74cabd3`](https://github.com/bmartel/django-lightning/commit/74cabd3d1920ed864bf712528a27524fe7c28836))
+
+- Use macos-latest runner with target cross-compilation
+  ([`8c5679e`](https://github.com/bmartel/django-lightning/commit/8c5679ea94199aa56aa4126d905e731c2df79b7c))
+
+
+## v0.1.2 (2026-07-25)
+
+### Bug Fixes
+
+- Simplified build runner matrix for cross-platform release binaries
+  ([`6f81095`](https://github.com/bmartel/django-lightning/commit/6f810954bff2b80dc0a09ce6a136b21f91048a5c))
+
+
+## v0.1.1 (2026-07-25)
+
+### Bug Fixes
+
+- Grant write permissions for github release workflow
+  ([`aba27b5`](https://github.com/bmartel/django-lightning/commit/aba27b5a49f173ba6d99905e37151753af59510f))
+
+
+## v0.1.0 (2026-07-25)
+
+### Chores
+
+- Ignore rust build target directory
+  ([`b3461ee`](https://github.com/bmartel/django-lightning/commit/b3461eea362a96f81e74581c2078ae65393c5511))
+
+### Features
+
+- Initial commit for django-lightning agentic starter project
+  ([`f50bfd1`](https://github.com/bmartel/django-lightning/commit/f50bfd15cc3c10652a1a268dfb6daf0e2bbf8c1a))
