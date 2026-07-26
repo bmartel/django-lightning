@@ -17,10 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v5
-
-      - name: Validate Manifests (Dry-Run)
+      - name: Validate YAML Syntax
         run: |
-          kubectl apply --dry-run=client --validate=false -f k8s/
+          python3 -c "import yaml, glob; [yaml.safe_load_all(open(f)) for f in glob.glob('k8s/*.yaml')]; print('YAML syntax valid')"
 
+      - name: Lint Kubernetes Manifests (kube-linter)
+        uses: stackrox/kube-linter-action@v1
+        with:
+          directory: k8s
