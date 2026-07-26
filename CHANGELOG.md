@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.2 (2026-07-26)
+
+### Bug Fixes
+
+- **ci**: Fix dependabot workflow syntax and cargo build packaging paths in release workflow
+  ([`9e5ba3a`](https://github.com/bmartel/django-lightning/commit/9e5ba3aa2514a775565ffcd5663f3df422ed6d91))
+
+
 ## v0.3.1 (2026-07-26)
 
 ### Bug Fixes
