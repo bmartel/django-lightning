@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.3 (2026-07-26)
+
+### Bug Fixes
+
+- **cli**: Fix println macro format string syntax error in scaffolding completion message
+  ([`edd4d50`](https://github.com/bmartel/django-lightning/commit/edd4d5010cda31dfb904b012fd44ca630f85bc13))
+
+
 ## v0.3.2 (2026-07-26)
 
 ### Bug Fixes
