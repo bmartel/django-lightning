@@ -18,8 +18,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.ADMIN_PAT }}
 
       - name: Python Semantic Release
         uses: python-semantic-release/python-semantic-release@v9.18.1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.ADMIN_PAT }}
