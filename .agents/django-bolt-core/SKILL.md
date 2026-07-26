@@ -14,6 +14,7 @@ metadata:
 - **Async First**: Declare handlers as `async def` unless synchronous blocking code is mandatory.
 - **Explicit Parameter Annotations**: Annotate parameters with `Query`, `Path`, `Header`, `Cookie`, `Form`, `File`, `Body`, or `Depends` from `django_bolt.param_functions`.
 - **Response Validation**: Use `response_model` on route decorators to validate and document output schemas with `msgspec.Struct`.
+- **High-Performance Database Queries**: Route handlers executing database queries MUST prevent N+1 queries (`select_related`/`prefetch_related`) and prevent overfetching unused fields (`.only()`/`.values()`) before transforming models into response payloads.
 
 ## BoltAPI Constructor Options
 

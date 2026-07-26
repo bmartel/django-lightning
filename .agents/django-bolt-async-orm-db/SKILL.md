@@ -1,10 +1,10 @@
 ---
 name: django-bolt-async-orm-db
-description: High-performance async database access using Django's async ORM (aget, acreate, afilter, aupdate, adelete, select_related), connection pooling, PostgreSQL configuration, PgBouncer compatibility, and migrations.
+description: High-performance async database access using Django's async ORM (aget, acreate, afilter, aupdate, adelete, select_related, prefetch_related, only, defer, values), query optimization, indexing strategies, PgBouncer compatibility, and zero-downtime migrations.
 compatibility: Agentic coding assistants building web applications with django-bolt.
 metadata:
   category: database
-  tags: [django, django-bolt, async-orm, postgres, pgbouncer, database, migrations]
+  tags: [django, django-bolt, async-orm, postgres, pgbouncer, database, query-optimization, indexing, n-plus-one, migrations]
 ---
 
 # Django-Bolt Async ORM & Database Access
@@ -31,13 +31,221 @@ async for item in Item.objects.filter(is_active=True)[:50]:
     print(item.name)
 ```
 
-## Optimizing Related Objects (`select_related` / `prefetch_related`)
+---
+
+## ⚡ High-Performance Query Optimization Rules
+
+To guarantee high throughput and low latency (~60k+ RPS), all database queries must avoid common ORM pitfalls: **N+1 queries**, **field overfetching**, **missing database indexes**, and **unoptimized SQL joins**.
+
+### 1. Eliminating N+1 Queries (`select_related` & `prefetch_related`)
+
+An N+1 query bug occurs when code iterates over $N$ parent objects and accesses a related object on each iteration, causing $1 + N$ separate database round-trips.
+
+#### ❌ POOR PERFORMANCE (N+1 Queries):
+```python
+# Triggers 1 query for orders + N queries for user on each iteration!
+orders = [order async for order in Order.objects.filter(status="paid")[:100]]
+for order in orders:
+    print(order.user.username)  # 💥 Separate DB query per order!
+```
+
+#### ✅ OPTIMAL PERFORMANCE (`select_related` for ForeignKeys / OneToOne):
+`select_related` performs an SQL `JOIN` in a single query.
 
 ```python
-# Use select_related before async iteration to prevent N+1 query overhead
-qs = Item.objects.select_related("created_by").filter(is_active=True)
-async for item in qs:
-    print(item.name, item.created_by.username)
+# Executes 1 single SQL query with JOIN
+orders = [order async for order in Order.objects.select_related("user").filter(status="paid")[:100]]
+for order in orders:
+    print(order.user.username)  # Zero extra DB queries!
+```
+
+#### ✅ OPTIMAL PERFORMANCE (`prefetch_related` for ManyToMany / Reverse ForeignKeys):
+`prefetch_related` executes 2 queries (parent records + batch child records via SQL `IN (...)`).
+
+```python
+from django.db.models import Prefetch
+from app.models import Category, Item
+
+# Fetch categories and prefetch active items in 2 queries total
+categories = [
+    cat
+    async for cat in Category.objects.prefetch_related(
+        Prefetch(
+            "items", queryset=Item.objects.filter(is_active=True).only("id", "name", "category_id")
+        )
+    )
+]
+```
+
+---
+
+### 2. Preventing Field Overfetching (`.only()`, `.defer()`, `.values()`)
+
+By default, Django SELECTs all columns (`SELECT *`). Fetching unneeded `TEXT`, `JSONB`, or `BYTEA` columns increases database disk I/O, network latency, and Python memory overhead.
+
+#### ❌ POOR PERFORMANCE (Overfetching large fields):
+```python
+# SELECT * fetches heavy `audit_log_json`, `raw_payload`, `avatar_blob` even if unused!
+users = [user async for user in User.objects.filter(is_active=True)[:100]]
+```
+
+#### ✅ OPTIMAL PERFORMANCE (`.only()` for specific Model fields):
+```python
+# SELECTs ONLY `id`, `username`, `email`
+users = [
+    user async for user in User.objects.only("id", "username", "email").filter(is_active=True)[:100]
+]
+```
+
+#### ✅ OPTIMAL PERFORMANCE (`.defer()` to omit specific heavy columns):
+```python
+# SELECTs all columns EXCEPT `raw_payload` and `avatar_blob`
+users = [
+    user
+    async for user in User.objects.defer("raw_payload", "avatar_blob").filter(is_active=True)[:100]
+]
+```
+
+#### ✅ OPTIMAL PERFORMANCE (`.values()` / `.values_list()` for primitives):
+Bypasses Model object creation entirely, returning plain Python dicts/tuples (80%+ memory reduction):
+
+```python
+# Returns list of primitive dicts: [{'id': 1, 'email': 'user@example.com'}]
+user_dicts = [row async for row in User.objects.filter(is_active=True).values("id", "email")[:100]]
+```
+
+---
+
+### 3. Database Indexing Guidelines & Best Practices
+
+Queries filtering or sorting on unindexed columns force PostgreSQL to perform full table scans (`Seq Scan`), causing query duration to grow linearly $O(N)$ with table size.
+
+#### Single & Composite B-Tree Indexes
+- **Single-Column Indexes**: Add `db_index=True` for foreign keys, status flags, or lookup fields searched individually (`User.email`, `Order.status`).
+- **Composite Indexes (Leftmost Prefix Rule)**: Place fields filtered/sorted together into a multi-column `models.Index`. Order matters: column with highest selectivity or `WHERE` equality should be first, followed by range/sort columns.
+
+```python
+class Order(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            # Supports queries like: WHERE user_id = X AND status = Y ORDER BY created_at DESC
+            models.Index(
+                fields=["user", "status", "-created_at"], name="order_user_status_created_idx"
+            ),
+        ]
+```
+
+#### PostgreSQL Special Indexes (GIN & Trigram)
+- **JSONB / Array Fields**: Use `GinIndex` for efficient JSON key lookups and array containment (`@>`).
+- **Wildcard Search (`icontains`)**: Unindexed `icontains` performs `LIKE '%search%'` requiring full table scans. Use PostgreSQL `gin_trgm_ops` trigram index for fast wildcard searches.
+
+```python
+from django.contrib.postgres.indexes import GinIndex, OpClass
+from django.db import models
+
+
+class Article(models.Model):
+    title = models.CharField(max_length=255)
+    metadata = models.JSONField(default=dict)
+
+    class Meta:
+        indexes = [
+            # GIN index for fast JSONB querying
+            GinIndex(fields=["metadata"], name="article_metadata_gin"),
+            # Trigram GIN index for fast title__icontains searches
+            GinIndex(
+                OpClass("title", name="gin_trgm_ops"),
+                name="article_title_trgm_idx",
+            ),
+        ]
+```
+
+#### Concurrent Indexing for Existing Large Tables
+When adding indexes to large existing production tables, use `AddIndexConcurrently` in Django migrations with `atomic = False` to prevent blocking WRITE locks on the table:
+
+```python
+from django.db import migrations, models
+from django.contrib.postgres.operations import AddIndexConcurrently
+
+
+class Migration(migrations.Migration):
+    atomic = False  # Mandatory for concurrent index creation
+
+    dependencies = [("app", "0005_previous")]
+
+    operations = [
+        AddIndexConcurrently(
+            model_name="order",
+            index=models.Index(fields=["created_at"], name="order_created_at_concurrent_idx"),
+        ),
+    ]
+```
+
+---
+
+### 4. Efficient Joins, Subqueries & Aggregations
+
+#### Avoid Massive `IN (...)` Lists with `Exists()` / `Subquery()`
+Passing large lists of IDs into `filter(id__in=huge_id_list)` generates bloated SQL queries and consumes excessive RAM. Use `Exists()` or `Subquery()` instead.
+
+#### ❌ POOR PERFORMANCE (In-memory ID list evaluation):
+```python
+paid_user_ids = [u["id"] async for u in User.objects.filter(is_paid=True).values("id")]
+orders = [order async for order in Order.objects.filter(user_id__in=paid_user_ids)]
+```
+
+#### ✅ OPTIMAL PERFORMANCE (`Exists()` subquery in single SQL execution):
+```python
+from django.db.models import Exists, OuterRef
+
+paid_users = User.objects.filter(id=OuterRef("user_id"), is_paid=True)
+orders = [
+    order
+    async for order in Order.objects.annotate(has_paid_user=Exists(paid_users)).filter(
+        has_paid_user=True
+    )
+]
+```
+
+---
+
+### 5. Surgical Query Scalability Profiling & Small-Dataset Index Testing
+
+> [!WARNING]
+> **Small-Dataset Optimizer Illusion**: On small test tables (e.g. 5–10 rows in test DBs), database query planners choose `Seq Scan` over `Index Scan` because reading 1 page is faster than index lookup overhead. This falsely hides missing indexes in test environments, leading to production latency explosions on large tables!
+
+#### Forcing Index-Path Evaluation (`SET LOCAL enable_seqscan = OFF;`)
+The surgical solution is `app.profiling.assert_scalable_query(queryset)`. It executes `EXPLAIN (FORMAT JSON)` under `SET LOCAL enable_seqscan = OFF;` (or parses query plans for SQLite) to force the query planner to evaluate index paths. If no index exists, it instantly catches unindexed table scans, unindexed sorts, and cartesian joins regardless of dataset size!
+
+```python
+import pytest
+from app.models import Order
+from app.profiling import assert_scalable_query, UnscalableQueryError
+
+
+@pytest.mark.django_db(transaction=True)
+async def test_order_search_query_scalability():
+    # Query building
+    queryset = Order.objects.filter(user_id=123, status="paid").order_by("-created_at")
+
+    # Surgically assert that index paths exist for filters and sorting
+    report = await assert_scalable_query(queryset)
+    assert report.is_scalable is True
+```
+
+To inspect executed SQL queries and timing during development:
+
+```python
+from django.db import connection
+
+# Reset query log and count executed queries in async code
+connection.queries_log.clear()
+users = [u async for u in User.objects.select_related("profile").filter(is_active=True)[:10]]
+print(f"Executed queries: {len(connection.queries)}")
 ```
 
 ---
@@ -117,6 +325,7 @@ Use `RunAsyncMigration` inside `app/migrations/*.py` to link async backfills dir
 ```python
 from django.db import migrations, models
 from app.async_migrations.operations import RunAsyncMigration
+
 
 class Migration(migrations.Migration):
     # Set atomic = False if using AddIndexConcurrently or non-atomic operations

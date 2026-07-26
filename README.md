@@ -140,6 +140,20 @@ just async-migrate 0001_example_backfill
 
 ---
 
+## ⚡ High-Performance Database Query Guidance
+
+To ensure APIs operate at peak performance (~60k+ RPS), all developers and AI agents must follow mandatory query rules:
+
+1. **N+1 Query Prevention**: Always use `select_related` for ForeignKeys & OneToOne relationships (1 SQL `JOIN`), and `prefetch_related` or `Prefetch()` for ManyToMany & reverse relationships (2 batched SQL queries with `IN (...)`).
+2. **Prevent Field Overfetching**: Use `.only("field1", "field2")` or `.defer("heavy_blob")` for model queries, or `.values()` / `.values_list()` for primitive dictionary output. Never fetch unused `TEXT`, `JSONB`, or `BYTEA` columns.
+3. **Proper Indexing**: Ensure all `filter()`, `order_by()`, and join fields are backed by single or composite B-Tree indexes (`db_index=True`, `models.Index`). Use GIN indexes for JSONB and `gin_trgm_ops` for wildcard searches (`icontains`).
+4. **Keyset Pagination**: Use indexed ID filtering (`id > last_seen_id`) or `app.utils.akeyset_chunker` instead of SQL `OFFSET` on large datasets to avoid $O(N)$ query degradation.
+5. **Subqueries over In-Memory Lists**: Use `Exists()` and `Subquery()` instead of loading arrays into Python memory and building massive `filter(id__in=[...])` queries.
+6. **Strict < 100ms Response Latency Budget**: Enforces a strict **100ms** latency target across all endpoints via `LatencyBudgetMiddleware`. Response telemetry headers (`X-Response-Time-Ms`, `X-Latency-Budget-Passed`) track performance on every request.
+7. **Surgical Small-Dataset Scalability Profiling**: Prevents small-dataset query planner illusions (where tiny test tables hide missing indexes). Use `app.profiling.assert_scalable_query(queryset)` in tests to force index-path evaluation (`SET LOCAL enable_seqscan = OFF;`) and catch unindexed table scans, unindexed sorts, and cartesian joins before code hits production.
+
+---
+
 ## 🤖 Agentic Capabilities & Skills
 
 

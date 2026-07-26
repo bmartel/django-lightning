@@ -44,10 +44,11 @@ from django_bolt import (
     OpenAPIConfig,
     ScalarRenderPlugin,
 )
+from app.middleware import LatencyBudgetMiddleware
 
 api = BoltAPI(
     enable_logging=True,
-    middleware=[TimingMiddleware, LoggingMiddleware],
+    middleware=[LatencyBudgetMiddleware, TimingMiddleware, LoggingMiddleware],
     openapi_config=OpenAPIConfig(
         title="Production API",
         version="1.0.0",
@@ -56,3 +57,35 @@ api = BoltAPI(
     ),
 )
 ```
+
+## Scalability Assertions & Latency Budget Testing
+
+### 1. Asserting Query Scalability (`assert_scalable_query`)
+Force PostgreSQL and database engines to evaluate index paths on small test tables (`enable_seqscan = OFF`) to prevent unindexed table scans or unindexed sorts from reaching production:
+
+```python
+import pytest
+from app.models import User
+from app.profiling import assert_scalable_query
+
+
+@pytest.mark.django_db(transaction=True)
+async def test_user_query_scalability():
+    queryset = User.objects.filter(id=1)
+    report = await assert_scalable_query(queryset)
+    assert report.is_scalable is True
+```
+
+### 2. Verifying Response Latency Headers
+Every request returns `X-Response-Time-Ms` and `X-Latency-Budget-Passed` (target **< 100ms**):
+
+```python
+def test_api_latency_budget():
+    client = TestClient(api)
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert "X-Response-Time-Ms" in response.headers
+    assert response.headers.get("X-Latency-Budget-Passed") == "true"
+```
+

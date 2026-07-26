@@ -59,4 +59,21 @@ class UserCreateSerializer(Serializer):
         if self.password != self.confirm_password:
             raise ValueError("Passwords do not match")
         return self
+
+
+## Aligning Schemas with ORM Query Selection (`.only()` / `.values()`)
+
+To achieve maximum response serialization throughput, align your `msgspec.Struct` response fields with ORM field selection. Omit unneeded database columns at the query layer rather than fetching them and dropping them during serialization:
+
+```python
+# 1. Define output Struct with only required fields
+class UserProfileDTO(msgspec.Struct):
+    id: int
+    username: str
+    email: str
+
+# 2. Select ONLY the fields specified in the output Struct
+user_data = await User.objects.only("id", "username", "email").filter(id=user_id).afirst()
+```
+
 ```

@@ -95,7 +95,9 @@ async def process_id_range_batch(ctx, start_id: int, end_id: int):
     from app.models import User
 
     # Use .values() to bypass Model instance allocation and .aiterator() to stream
-    query = User.objects.filter(id__gte=start_id, id__lt=end_id, is_active=True).values("id", "email")
+    query = User.objects.filter(id__gte=start_id, id__lt=end_id, is_active=True).values(
+        "id", "email"
+    )
 
     async for user_data in query.aiterator(chunk_size=1000):
         await send_notification(user_data["id"], user_data["email"])

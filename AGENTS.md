@@ -25,7 +25,7 @@ Welcome agent. This repository is **django-lightning**, a high-performance start
 - **Django Admin**: Ready out of the box at `/admin/`. Registered via `app/admin.py`. Run `uv run manage.py createsuperuser` to create admin credentials.
 - **Authentication**: JWT authentication utilities (`app.auth`), permission guards (`app.guards`), and profile endpoints (`/api/auth/register`, `/api/auth/login`, `/api/auth/me`) work out of the box.
 
-### 4. Async First Handlers & Database Access
+### 4. Async First Handlers, Query Performance & Database Access
 - **Always write async handlers** (`async def`).
 - **Always use async ORM methods**:
   - `await Model.objects.filter(...).afirst()`
@@ -34,6 +34,14 @@ Welcome agent. This repository is **django-lightning**, a high-performance start
   - `await Model.objects.filter(...).aexists()`
   - `await Model.objects.filter(...).aupdate(...)`
   - `await instance.adelete()`
+- **High-Performance Query Rules & Anti-Pattern Prevention**:
+  - **N+1 Query Prevention**: Mandatory use of `select_related` (for ForeignKeys & OneToOneFields) and `prefetch_related` or `Prefetch()` (for ManyToManyFields & reverse ForeignKeys) before accessing related model attributes in loops or serializing response payloads.
+  - **Prevent Overfetching Fields**: Never fetch unused columns (especially large `TEXT`, `JSONB`, or `BYTEA` fields). Use `.only(...)` / `.defer(...)` when returning model instances, or `.values(...)` / `.values_list(...)` when returning raw dictionaries or tuples to reduce memory footprint and database network payload size.
+  - **Database Indexing Requirements**: Enforce proper indexes (`db_index=True`, `models.Index`, composite indexes for multi-column conditions, or `GinIndex` for JSONB/array fields) on all query filter columns, join keys, and `order_by` fields. Avoid unindexed case-insensitive wildcard searches (`icontains`) on large tables.
+  - **Join & Subquery Optimization**: Avoid multi-table cartesian products and redundant joins. Use selective filtering, `Exists()`, `Subquery()`, or `Prefetch(..., queryset=...)` with filtered child querysets instead of loading raw lists in Python memory.
+  - **Strict < 100ms Response Latency Budget**: All API endpoints MUST respond under **100ms** total latency regardless of table sizes or feature complexity. Use `LatencyBudgetMiddleware` to track and enforce request processing times. Exceeding 100ms triggers performance warnings and blocks scalability verification.
+  - **Surgical Query Profiling & Small-Dataset Index Guard**: Never rely on standard EXPLAIN against small test tables (where DB optimizers falsely hide missing indexes via temporary Seq Scans). Use `app.profiling.assert_scalable_query(queryset)` in tests to force index-path evaluation (`SET LOCAL enable_seqscan = OFF;`) and automatically fail tests on unindexed table scans, unindexed sorts, or cartesian joins.
+  - **Keyset Pagination over OFFSET**: Always use keyset pagination (`id > last_seen_id`) or `app.utils.akeyset_chunker` instead of SQL `OFFSET` on large datasets to avoid $O(N)$ query degradation.
 - **High-Volume Data Processing (1M+ Records)**:
   - **Memory Optimization**: Use `.values()` / `.values_list()` to bypass Model instance creation, reducing RAM usage by 80%+. Use `aiterator(chunk_size=...)` for streaming.
   - **Keyset Pagination**: Use `app.utils.akeyset_chunker` or indexed ID chunking (`id > last_id`) instead of SQL `OFFSET` to prevent $O(N)$ query degradation.

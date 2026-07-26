@@ -7,6 +7,7 @@ from django_bolt import (
     TimingMiddleware,
 )
 
+from app.middleware import LatencyBudgetMiddleware
 from app.routes.auth import register_auth_routes
 from app.routes.health import register_health_routes
 from app.routes.mcp_server import setup_mcp_server
@@ -20,6 +21,7 @@ api = BoltAPI(
     compression=CompressionConfig(),
     enable_logging=True,
     middleware=[
+        LatencyBudgetMiddleware,
         TimingMiddleware,
         LoggingMiddleware,
     ],
