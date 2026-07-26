@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.4 (2026-07-26)
+
+### Bug Fixes
+
+- **ci**: Move continue-on-error to step level for crates.io publishing
+  ([`7618390`](https://github.com/bmartel/django-lightning/commit/7618390e98672e3c0d977c297ce19ae5fe2bb24b))
+
+
 ## v0.3.3 (2026-07-26)
 
 ### Bug Fixes
