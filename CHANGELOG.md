@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v0.4.0 (2026-07-26)
+
+### Features
+
+- **profiling**: Add surgical query scalability profiler, latency budget guard, and query
+  performance rules
+  ([`a034363`](https://github.com/bmartel/django-lightning/commit/a0343632a867180ba92cae7ecbe853c106fcf563))
+
+
 ## v0.3.5 (2026-07-26)
 
 ### Bug Fixes
