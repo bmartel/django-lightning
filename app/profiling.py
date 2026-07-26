@@ -185,10 +185,18 @@ class QueryScalabilityProfiler:
                 detail = row[-1]
                 nodes.append(detail)
 
-                if "SCAN TABLE" in detail and not allow_seq_scan:
-                    table_name = detail.split("SCAN TABLE ")[-1].split(" ")[0]
+                if (
+                    ("SCAN " in detail or "SCAN TABLE " in detail)
+                    and "USING INDEX" not in detail
+                    and not allow_seq_scan
+                ):
+                    table_name = (
+                        detail.split("SCAN TABLE ")[-1].split(" ")[0]
+                        if "SCAN TABLE " in detail
+                        else detail.split("SCAN ")[-1].split(" ")[0]
+                    )
                     msg = (
-                        f"Unindexed Full Table Scan ('SCAN TABLE') "
+                        f"Unindexed Full Table Scan ('SCAN') "
                         f"detected on table '{table_name}'."
                     )
                     issues.append(msg)

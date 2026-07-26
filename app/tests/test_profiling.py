@@ -17,7 +17,7 @@ async def test_query_scalability_profiler_indexed_query():
     """Verify that querying by primary key is recognized as a scalable indexed query."""
     user = await User.objects.acreate(username="profiler_user", email="profiler@example.com")
 
-    queryset = User.objects.filter(id=user.id)
+    queryset = User.objects.filter(id=user.id).order_by("id")
     report = await QueryScalabilityProfiler.analyze_queryset(queryset)
 
     assert report.is_scalable is True
@@ -28,7 +28,7 @@ async def test_query_scalability_profiler_indexed_query():
 async def test_assert_scalable_query_unindexed_scan():
     """Verify that assert_scalable_query detects unindexed filter conditions."""
     # Searching by unindexed 'bio' column triggers full table scan detection
-    queryset = User.objects.filter(bio="unindexed bio query search")
+    queryset = User.objects.filter(bio="unindexed bio query search").order_by()
 
     with pytest.raises(UnscalableQueryError) as exc_info:
         await assert_scalable_query(queryset)

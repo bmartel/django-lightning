@@ -12,6 +12,9 @@ class User(AbstractUser):
 
     class Meta:
         ordering = ["-date_joined"]
+        indexes = [
+            models.Index(fields=["-date_joined"], name="user_date_joined_idx"),
+        ]
 
     def __str__(self):
         return self.username
