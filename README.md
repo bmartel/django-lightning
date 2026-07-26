@@ -18,6 +18,7 @@ Equipped with a **Custom User Model** ready out of the box, a comprehensive set 
 - **📦 Ultra-Fast Data Validation**: Uses `msgspec.Struct` (10-20x faster than Pydantic) and `django_bolt.serializers.Serializer`.
 - **🔄 Async-First ORM**: Leverages Django's native async ORM (`aget`, `acreate`, `afilter`, `aupdate`, `adelete`).
 - **🔀 Built-in Async Migrations**: Native background data backfill framework (`BaseAsyncMigration`, `python manage.py async_migrate`, and SAQ worker integration) for zero-downtime rolling deployments.
+- **📊 High-Volume Batch Processing & PgBouncer Ready**: Zero-memory ballooning patterns (`.values()`, `aiterator()`, keyset pagination) and PgBouncer transaction pooling safety for processing millions of records.
 - **📡 Realtime & Streaming**: Server-Sent Events (SSE) and chunked streaming endpoints.
 
 - **📚 Interactive API Docs**: Built-in Scalar OpenAPI interface rendered at `/docs`.

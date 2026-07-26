@@ -1,6 +1,6 @@
 ---
 name: django-bolt-background-workers
-description: High-performance async background tasks & queue worker management powered by SAQ and Redis.
+description: High-performance async background tasks, queue worker management, task fan-out for millions of records, and memory optimization powered by SAQ and Redis.
 ---
 
 # High-Performance Async Background Tasks (`SAQ` + Redis)
@@ -28,9 +28,9 @@ Tasks are plain `async def` functions receiving a context dictionary `ctx`:
 
 ```python
 # app/tasks.py
-from saq import Queue, CronJob
-from django.conf import settings as django_settings
 import os
+from django.conf import settings as django_settings
+from saq import CronJob, Queue
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 queue = Queue.from_url(REDIS_URL, name="lightning_jobs")
@@ -66,6 +66,50 @@ settings = {
 
 ---
 
+## ⚡ PROCESSING MILLIONS OF RECORDS (TASK FAN-OUT PATTERN)
+
+When processing millions of records, **never load all records into memory in a single task**. Instead, use the **Producer-Worker Fan-Out Pattern**:
+
+1. **Producer Task**: Enqueues sub-tasks split by primary key ID ranges (`start_id` to `end_id`).
+2. **Worker Tasks**: Process each 10,000-record chunk in parallel using `.values()` and keyset pagination.
+
+```python
+# 1. Producer Task: Splits 1M records into 100 tasks of 10,000 records each
+async def fanout_million_records_job(ctx):
+    from app.models import User
+    from django.db import models
+
+    min_id = await User.objects.aaggregate(models.Min("id"))["id__min"] or 0
+    max_id = await User.objects.aaggregate(models.Max("id"))["id__max"] or 0
+
+    chunk_size = 10000
+    for start_id in range(min_id, max_id + 1, chunk_size):
+        end_id = start_id + chunk_size
+        await queue.enqueue("process_id_range_batch", start_id=start_id, end_id=end_id)
+
+    return {"status": "enqueued_chunks", "min_id": min_id, "max_id": max_id}
+
+
+# 2. Worker Task: Processes a single ID range with zero RAM ballooning
+async def process_id_range_batch(ctx, start_id: int, end_id: int):
+    from app.models import User
+
+    # Use .values() to bypass Model instance allocation and .aiterator() to stream
+    query = User.objects.filter(id__gte=start_id, id__lt=end_id, is_active=True).values("id", "email")
+
+    async for user_data in query.aiterator(chunk_size=1000):
+        await send_notification(user_data["id"], user_data["email"])
+
+    return {"status": "completed", "range": f"{start_id}-{end_id}"}
+```
+
+### PgBouncer Safety in Workers
+When running workers against PostgreSQL behind PgBouncer in **Transaction Pooling Mode**:
+- Use **Keyset Pagination** (`id > last_id`) or explicit `async with transaction.aatomic():` inside worker tasks so named server-side cursors do not fail with `cursor does not exist`.
+- Alternatively, configure workers to use a direct connection (`WORKER_DATABASE_URL`) on PostgreSQL port 5432.
+
+---
+
 ## 📤 ENQUEUING TASKS IN API ROUTES
 
 Enqueuing a task is non-blocking and completes in < 1 millisecond:
@@ -94,7 +138,9 @@ just worker
 ### Docker Compose
 ```yaml
 worker:
-  build: .
+  build:
+    context: .
+    target: dev
   command: uv run saq app.tasks.settings
   environment:
     - REDIS_URL=redis://redis:6379/0
@@ -112,4 +158,3 @@ During zero-downtime rolling deployments, background workers may be executing ta
 1. **Code Readiness Guard**: `run_async_migration_task` checks if the target `BaseAsyncMigration` class is present in Python runtime. If absent (old worker image), it defers execution (`STATUS_DEFERRED`) without raising fatal exceptions or marking tasks as `FAILED`.
 2. **Periodic Auto-Discovery**: `process_pending_async_migrations` runs every 5 minutes (or on worker startup) to automatically pick up `STATUS_PENDING` and `STATUS_DEFERRED` migrations once new worker pods finish deploying.
 3. **Dependency Ordering**: `BaseAsyncMigration.check_dependencies_met()` verifies that prerequisite Django schema migrations and prior async migrations are applied before processing batches.
-

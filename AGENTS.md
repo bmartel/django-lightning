@@ -34,7 +34,10 @@ Welcome agent. This repository is **django-lightning**, a high-performance start
   - `await Model.objects.filter(...).aexists()`
   - `await Model.objects.filter(...).aupdate(...)`
   - `await instance.adelete()`
-  - `async for obj in Model.objects.filter(...):`
+- **High-Volume Data Processing (1M+ Records)**:
+  - **Memory Optimization**: Use `.values()` / `.values_list()` to bypass Model instance creation, reducing RAM usage by 80%+. Use `aiterator(chunk_size=...)` for streaming.
+  - **Keyset Pagination**: Use `app.utils.akeyset_chunker` or indexed ID chunking (`id > last_id`) instead of SQL `OFFSET` to prevent $O(N)$ query degradation.
+  - **PgBouncer Safety**: In PgBouncer Transaction Mode (`pool_mode = transaction`), use keyset pagination or wrap `aiterator()` in `async with transaction.aatomic():` so server-side cursors do not fail with `cursor does not exist`.
 - **Never invoke blocking sync ORM calls in async handlers**.
 
 ### 5. Data Validation & Schemas
