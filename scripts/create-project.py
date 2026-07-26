@@ -135,7 +135,8 @@ def main():
     print("  2. uv venv")
     print('  3. uv pip install -e ".[dev]"')
     print("  4. uv run manage.py migrate")
-    print("  5. uv run manage.py runbolt --dev")
+    print("  5. uv run manage.py collectstatic --noinput")
+    print("  6. uv run manage.py runbolt --dev")
 
 
 if __name__ == "__main__":

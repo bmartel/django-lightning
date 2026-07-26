@@ -95,9 +95,10 @@ uv venv
 uv pip install -e ".[dev]"
 ```
 
-### 2. Run Database Migrations
+### 2. Run Database Migrations & Collect Static Files
 ```bash
 uv run manage.py migrate
+uv run manage.py collectstatic --noinput
 ```
 
 ### 3. Start the Django-Bolt Development Server

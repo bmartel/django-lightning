@@ -330,15 +330,22 @@ fn run_generator(
         setup_uv_env(&dest_dir);
     }
 
-    println!("\n{}", "✨ Project scaffolding complete!".bold().green());
+    println!("\n✨ Project scaffolding complete!".bold().green());
     println!("\nNext steps:");
-    println!("  1. cd {}", dest_dir.display().to_string().bold());
+    let mut step = 1;
+    println!("  {}. cd {}", step, dest_dir.display().to_string().bold());
+    step += 1;
     if !setup_env {
-        println!("  2. uv venv");
-        println!("  3. uv pip install -e \".[dev]\"");
+        println!("  {}. uv venv", step);
+        step += 1;
+        println!("  {}. uv pip install -e \".[dev]\"", step);
+        step += 1;
     }
-    println!("  4. uv run manage.py migrate");
-    println!("  5. uv run manage.py runbolt --dev");
+    println!("  {}. uv run manage.py migrate", step);
+    step += 1;
+    println!("  {}. uv run manage.py collectstatic --noinput", step);
+    step += 1;
+    println!("  {}. uv run manage.py runbolt --dev", step);
 
     Ok(())
 }
