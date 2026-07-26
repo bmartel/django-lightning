@@ -33,10 +33,15 @@ We built a dedicated Rust CLI tool **`create-django-bolt`** located in `cli/`. I
 
 ### 1. Install the CLI Binary
 
-**Option A: 1-Line Standalone Shell Installer (No Rust required)**
-```bash
-curl -fsSL https://raw.githubusercontent.com/bmartel/django-lightning/main/scripts/install-cli.sh | sh
-```
+**Option A: 1-Line Standalone Installer (No Rust/Cargo required)**
+- **macOS / Linux**:
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/bmartel/django-lightning/main/scripts/install-cli.sh | sh
+  ```
+- **Windows (PowerShell)**:
+  ```powershell
+  irm https://raw.githubusercontent.com/bmartel/django-lightning/main/scripts/install-cli.ps1 | iex
+  ```
 
 **Option B: Via Cargo (Rust users)**
 ```bash
@@ -47,6 +52,7 @@ cargo install create-django-bolt
 ```bash
 cargo build --manifest-path cli/Cargo.toml --release
 ```
+
 
 ### 2. Run the Rust CLI Generator
 ```bash
