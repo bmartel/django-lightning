@@ -1,8 +1,8 @@
 """
 High-Performance Native Rust Interop Module for Django-Lightning.
 
-Provides type-safe, non-blocking wrappers and ultra-efficient memory transfer utilities
-between Python and native PyO3 Rust extensions.
+Provides explicit, type-safe async wrappers and ultra-efficient memory transfer utilities
+for native PyO3 Rust extensions.
 """
 
 from __future__ import annotations
@@ -10,9 +10,12 @@ from __future__ import annotations
 import asyncio
 import functools
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import Any, ParamSpec, TypeVar
 
 import msgspec
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 try:
     from app import rust_core
@@ -37,18 +40,24 @@ def get_rust_core_version() -> str | None:
 
 def native_async[**P, R](func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
     """
-    Decorator that wraps a synchronous PyO3 Rust function (or Python fallback) into a fully
-    type-safe, non-blocking async function pre-configured for threadpool execution.
+    Wraps a synchronous PyO3 Rust function into a fully type-safe, non-blocking async function
+
+    pre-configured for threadpool execution with GIL releasing.
 
     Preserves exact parameter type hints, IDE autocomplete, and docstrings.
 
     Usage:
         process_batch = native_async(rust_core.process_batch)
+
         results = await process_batch(items)
     """
 
     @functools.wraps(func)
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        if not HAS_RUST_CORE:
+            raise RuntimeError(
+                f"rust_core native module is not compiled. Cannot execute '{func.__name__}'."
+            )
         if kwargs:
             return await asyncio.to_thread(func, *args, **kwargs)
         return await asyncio.to_thread(func, *args)
@@ -57,35 +66,26 @@ def native_async[**P, R](func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
 
 
 def native_json[In, Out](
-    rust_func: Callable[[bytes], bytes] | None,
+    rust_func: Callable[[bytes], bytes],
     response_type: type[Out],
-    fallback: Callable[[In], Out] | Callable[[In], Awaitable[Out]] | None = None,
 ) -> Callable[[In], Awaitable[Out]]:
     """
-    Creates an ultra-fast, type-safe async native function operating on msgspec JSON byte buffers.
+    Wraps a PyO3 Rust byte-buffer function into an ultra-fast, type-safe async native function
 
-    Bypasses PyDict/PyList FFI allocation overhead by serializing input structs directly to UTF-8
-    bytes, passing raw memory slices to Rust (`serde_json`), executing in a threadpool with GIL
-    released, and decoding the returned bytes back to response_type.
+    operating on msgspec JSON byte buffers.
+
+    Serializes input structs directly to UTF-8 bytes using msgspec, passes raw memory slices
+    to Rust (`serde_json`), executes in a threadpool with GIL released, and decodes the result.
 
     Usage:
-        process_payload = native_json(
-            rust_core.process_payload if HAS_RUST_CORE else None,
-            response_type=OutputStruct,
-            fallback=python_fallback_fn,
-        )
+        process_payload = native_json(rust_core.process_payload, response_type=OutputStruct)
 
         response = await process_payload(payload)
     """
 
     async def wrapper(payload: In) -> Out:
-        if rust_func is None or not HAS_RUST_CORE:
-            if fallback is not None:
-                res = fallback(payload)
-                if asyncio.iscoroutine(res):
-                    return await res
-                return res
-            raise RuntimeError("rust_core native extension module is not compiled or available.")
+        if not HAS_RUST_CORE:
+            raise RuntimeError("rust_core native module is not compiled.")
 
         input_bytes = msgspec.json.encode(payload)
         output_bytes = await asyncio.to_thread(rust_func, input_bytes)
@@ -99,6 +99,8 @@ async def run_native[R](func: Callable[..., R], *args: Any, **kwargs: Any) -> R:
     Execute a native PyO3 Rust function asynchronously in a background thread pool.
     Releases GIL and prevents blocking Python's event loop.
     """
+    if not HAS_RUST_CORE:
+        raise RuntimeError("rust_core native module is not compiled.")
     if kwargs:
         return await asyncio.to_thread(func, *args, **kwargs)
     return await asyncio.to_thread(func, *args)

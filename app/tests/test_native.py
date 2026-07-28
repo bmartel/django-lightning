@@ -61,20 +61,6 @@ async def test_native_json_decorator():
 
 
 @pytest.mark.asyncio
-async def test_native_json_fallback():
-    def python_fallback(payload: SamplePayload) -> SamplePayload:
-        return SamplePayload(name=f"fallback_{payload.name}", count=payload.count * 2)
-
-    echo_fallback = native_json(
-        rust_func=None, response_type=SamplePayload, fallback=python_fallback
-    )
-    payload = SamplePayload(name="test", count=5)
-    res = await echo_fallback(payload)
-    assert res.name == "fallback_test"
-    assert res.count == 10
-
-
-@pytest.mark.asyncio
 async def test_zero_copy_raw_bytes_transfer():
     if not is_rust_available():
         pytest.skip("rust_core module not compiled")

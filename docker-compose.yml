@@ -9,6 +9,9 @@ services:
     command: uv run manage.py migrate --noinput
     volumes:
       - .:/app
+      - /app/.venv
+      - cargo_cache:/root/.cargo
+      - cargo_target:/app/rust_core/target
     environment:
       - DEBUG=1
       - SECRET_KEY=dev-secret-key-change-in-production-1234567890
@@ -22,9 +25,12 @@ services:
       context: .
       dockerfile: Dockerfile
       target: dev
-    command: uv run manage.py runbolt --host 0.0.0.0 --port 8000 --dev
+    command: sh -c "uv run maturin develop && uv run manage.py runbolt --host 0.0.0.0 --port 8000 --dev"
     volumes:
       - .:/app
+      - /app/.venv
+      - cargo_cache:/root/.cargo
+      - cargo_target:/app/rust_core/target
     ports:
       - "8000:8000"
     environment:
@@ -44,9 +50,12 @@ services:
       context: .
       dockerfile: Dockerfile
       target: dev
-    command: uv run saq app.tasks.settings
+    command: sh -c "uv run saq app.tasks.settings"
     volumes:
       - .:/app
+      - /app/.venv
+      - cargo_cache:/root/.cargo
+      - cargo_target:/app/rust_core/target
     environment:
       - DEBUG=1
       - SECRET_KEY=dev-secret-key-change-in-production-1234567890
@@ -86,3 +95,5 @@ services:
 
 volumes:
   postgres_data:
+  cargo_cache:
+  cargo_target:
