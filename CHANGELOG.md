@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v0.9.9 (2026-07-28)
+
+### Bug Fixes
+
+- **ci**: Add concurrency controls and git rebase step to semantic-release workflow to prevent race
+  conditions
+  ([`a6c32e7`](https://github.com/bmartel/django-lightning/commit/a6c32e790ac2aec0b207e6b39af31e9ff050eda3))
+
+
 ## v0.9.8 (2026-07-28)
 
 ### Bug Fixes
