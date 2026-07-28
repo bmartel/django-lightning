@@ -1,7 +1,6 @@
 import msgspec
 import pytest
 
-from app import rust_core
 from app.native import (
     get_rust_core_version,
     is_rust_available,
@@ -9,6 +8,11 @@ from app.native import (
     native_json,
     run_native,
 )
+
+try:
+    from app import rust_core
+except ImportError:
+    rust_core = None
 
 
 class SamplePayload(msgspec.Struct):
@@ -62,7 +66,7 @@ async def test_native_json_decorator():
 
 @pytest.mark.asyncio
 async def test_zero_copy_raw_bytes_transfer():
-    if not is_rust_available():
+    if not is_rust_available() or rust_core is None:
         pytest.skip("rust_core module not compiled")
 
     async_process_bytes = native_async(rust_core.process_raw_bytes)

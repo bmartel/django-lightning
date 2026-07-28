@@ -48,10 +48,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
+      - name: Install dependencies & Build Native Extension
         run: |
           uv venv
-          uv pip install .[dev]
+          uv pip install maturin
+          uv run maturin develop
+          uv pip install -e ".[dev]"
 
       - name: Run Linting
         run: |
