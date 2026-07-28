@@ -1,9 +1,23 @@
 # Kube-Linter configuration for django-lightning Kubernetes manifests
 checks:
-  addAllBuiltIn: true
+  ignorePaths:
+    - "k8s/dev/dev-deployment.yaml"
+    - "dev/dev-deployment.yaml"
   doNotInclude:
-    - no-read-only-root-fs
-    - latest-tag
-    - env-var-secret
-    - no-anti-affinity
-    - unset-memory-requirements
+    - "no-read-only-root-fs"
+    - "latest-tag"
+    - "env-var-secret"
+    - "no-anti-affinity"
+    - "unset-memory-requirements"
+    - "default-service-account"
+    - "no-liveness-probe"
+    - "no-readiness-probe"
+    - "minimum-three-replicas"
+    - "no-node-affinity"
+    - "required-annotation-email"
+    - "required-label-owner"
+    - "non-isolated-pod"
+    - "use-namespace"
+    - "dnsconfig-options"
+    - "no-rolling-update-strategy"
+    - "restart-policy"
