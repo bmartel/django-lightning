@@ -3,6 +3,8 @@
 //! Exposes low-level CPU computations, zero-copy byte processing, and Rayon multithreading
 //! routines with zero Python GIL overhead.
 
+pub mod db;
+
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
@@ -28,5 +30,7 @@ fn process_raw_bytes<'py>(py: Python<'py>, input_bytes: &[u8]) -> PyResult<Bound
 fn rust_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(rust_core_version, m)?)?;
     m.add_function(wrap_pyfunction!(process_raw_bytes, m)?)?;
+    m.add_function(wrap_pyfunction!(db::db_query_users_json, m)?)?;
     Ok(())
 }
+

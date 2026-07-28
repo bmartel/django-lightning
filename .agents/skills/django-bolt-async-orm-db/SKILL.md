@@ -9,7 +9,16 @@ metadata:
 
 # Django-Bolt Async ORM & Database Access
 
+## Dual Database Query Engine Paradigm
+
+`django-lightning` supports two database access mechanisms:
+1. **Django Async ORM (`app/models.py`)**: Standard, primary database interface for REST APIs, CRUD, Auth, Admin, and business logic.
+2. **High-Performance Rust DB Engine (`rust_core::db` + `sqlx`)**: Optional high-throughput query engine for sub-millisecond API endpoints (>50k RPS), vector searches, bulk transformations, and streaming aggregations. Synchronized with Django models via `just rust-codegen` (`generate_rust_models`).
+
+---
+
 ## Mandatory Async ORM Patterns
+
 
 In `django-bolt` async route handlers, **never call blocking sync ORM methods** (`filter()`, `get()`, `create()`, `save()`, `delete()`). Always use the `a` prefixed async methods!
 

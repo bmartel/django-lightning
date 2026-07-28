@@ -188,14 +188,101 @@ async def handle_fast_transform(payload: HeavyStruct) -> HeavyStructOut:
 
 ---
 
-## 💻 4. Developer Workflow & CLI Tooling
+## 🗄️ 4. High-Performance Rust Database Query Engine & Model Codegen
+
+In addition to CPU calculations, `rust_core` includes a high-throughput **Rust Database Query Engine** powered by `sqlx` and `tokio`.
+
+### Single Source of Truth: Django Model Codegen
+Django models (`app/models.py`) remain the authoritative single source of truth for database schema and migrations.
+To keep Rust types perfectly synchronized with Django models:
+
+1. Run **`just rust-codegen`** (or `uv run manage.py generate_rust_models`).
+2. This introspects `app/models.py` and generates `rust_core/src/db/models.rs` containing `sqlx::FromRow` structs, table constants, and field column arrays:
+
+```rust
+/// Generated Rust struct for Django model `User` (DB Table: `app_user`).
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct UserRow {
+    pub id: i64,
+    pub username: String,
+    pub email: String,
+    pub date_joined: chrono::DateTime<chrono::Utc>,
+    pub bio: String,
+    pub avatar_url: String,
+    // ...
+}
+
+impl UserRow {
+    pub const TABLE_NAME: &'static str = "app_user";
+    pub const COLUMNS: &'static [&'static str] = &["id", "username", "email", ...];
+}
+```
+
+### High-Speed DB Querying in Rust (`rust_core::db`)
+Rust database query functions execute within Tokio runtime inside `py.allow_threads(|| { ... })`, releasing the GIL during database network I/O:
+
+```rust
+use crate::db::models::UserRow;
+use pyo3::prelude::*;
+use pyo3::types::PyBytes;
+use std::sync::OnceLock;
+
+static TOKIO_RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
+
+fn get_tokio_runtime() -> &'static tokio::runtime::Runtime {
+    TOKIO_RUNTIME.get_or_init(|| {
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .expect("Failed to build Tokio runtime")
+    })
+}
+
+#[pyfunction]
+pub fn db_query_users_json<'py>(py: Python<'py>, db_url: String, limit: i64) -> PyResult<Bound<'py, PyBytes>> {
+    let json_bytes = py.allow_threads(|| {
+        let rt = get_tokio_runtime();
+        rt.block_on(async {
+            use sqlx::sqlite::SqlitePoolOptions;
+            let pool = SqlitePoolOptions::new().connect(&db_url).await?;
+            let users = sqlx::query_as::<_, UserRow>("SELECT * FROM app_user LIMIT ?")
+                .bind(limit)
+                .fetch_all(&pool)
+                .await?;
+            serde_json::to_vec(&users)
+        })
+    }).map_err(pyo3::exceptions::PyValueError::new_err)?;
+
+    Ok(PyBytes::new_bound(py, &json_bytes))
+}
+```
+
+
+### Type-Safe Invocations in Python (`app/native.py`)
+Python endpoints call `query_users_native(db_url, limit=100)`, decoding zero-copy JSON bytes directly in `msgspec`:
+
+```python
+from app.native import query_users_native
+
+
+@api.get("/api/v1/fast-users")
+async def get_fast_users(limit: int = 100):
+    db_url = settings.DATABASES["default"]["NAME"]
+    return await query_users_native(f"sqlite://{db_url}", limit=limit)
+```
+
+---
+
+## 💻 5. Developer Workflow & CLI Tooling
 
 Execute all compilation and testing tasks using `just` / `uv`:
 
-- **`just rust-dev`**: Runs `uv run maturin develop`. Compiles `rust_core` in debug mode and installs editable extension into `.venv`.
+- **`just rust-codegen`**: Runs `uv run manage.py generate_rust_models` to refresh `rust_core/src/db/models.rs`.
+- **`just rust-dev`**: Runs `rust-codegen` then `uv run maturin develop`. Compiles `rust_core` in debug mode and installs editable extension into `.venv`.
 - **`just rust-build`**: Runs `uv run maturin develop --release`. Compiles optimized release build.
 - **`just rust-test`**: Runs `cargo test --manifest-path rust_core/Cargo.toml`. Executes Rust-native unit tests directly.
-- **`uv run pytest -v`**: Runs pytest suite verifying Python integration.
+- **`uv run pytest -v`**: Runs pytest suite verifying Python & Rust integration.
+
 
 ---
 

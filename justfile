@@ -11,9 +11,14 @@ new-project name dest="":
 build-cli:
     cargo build --manifest-path cli/Cargo.toml --release
 
+# Generate Rust struct definitions from Django models
+rust-codegen:
+    uv run manage.py generate_rust_models
+
 # Compile Rust core in debug mode for local development
-rust-dev:
+rust-dev: rust-codegen
     uv run maturin develop
+
 
 # Compile Rust core in release mode for maximum production performance
 rust-build:

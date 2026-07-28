@@ -104,3 +104,21 @@ async def run_native[R](func: Callable[..., R], *args: Any, **kwargs: Any) -> R:
     if kwargs:
         return await asyncio.to_thread(func, *args, **kwargs)
     return await asyncio.to_thread(func, *args)
+
+
+if HAS_RUST_CORE and hasattr(rust_core, "db_query_users_json"):
+    db_query_users_json = native_async(rust_core.db_query_users_json)
+else:
+    db_query_users_json = None
+
+
+async def query_users_native(db_url: str, limit: int = 100) -> list[dict[str, Any]]:
+    """
+    Query users directly using high-performance Rust DB engine and sqlx.
+
+    Executes in Tokio runtime, releasing Python GIL, and deserializes via msgspec.
+    """
+    if not HAS_RUST_CORE or db_query_users_json is None:
+        raise RuntimeError("rust_core native module with DB engine support is not compiled.")
+    raw_bytes = await db_query_users_json(db_url, limit)
+    return msgspec.json.decode(raw_bytes, type=list[dict[str, Any]])
