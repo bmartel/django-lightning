@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.10.0 (2026-07-28)
+
+### Features
+
+- **rust**: Add Django-guided Rust DB engine with model codegen and sqlx integration
+  ([`c9121a0`](https://github.com/bmartel/django-lightning/commit/c9121a0997b9555cc97d1a0417300451b4d0cf0e))
+
+
 ## v0.9.9 (2026-07-28)
 
 ### Bug Fixes
