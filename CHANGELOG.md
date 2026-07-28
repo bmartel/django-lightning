@@ -1,6 +1,20 @@
 # CHANGELOG
 
 
+## v0.9.6 (2026-07-28)
+
+### Bug Fixes
+
+- **k8s**: Add .kube-linter.yaml config and securityContext to k8s manifests to pass kube-linter
+  validation
+  ([`64960c3`](https://github.com/bmartel/django-lightning/commit/64960c3f03138c079744f31bf62594927cdfc78d))
+
+### Documentation
+
+- Update README with Native Rust Core interop, type safety, and memory transfer architecture
+  ([`e7c09e9`](https://github.com/bmartel/django-lightning/commit/e7c09e92e11edd390f6fde66307a87f20c085e1f))
+
+
 ## v0.9.5 (2026-07-28)
 
 ### Bug Fixes
