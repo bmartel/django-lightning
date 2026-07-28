@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.9.7 (2026-07-28)
+
+### Bug Fixes
+
+- **k8s**: Update .kube-linter.yaml exclusions and add podAntiAffinity to production deployments
+  ([`a7dfbf2`](https://github.com/bmartel/django-lightning/commit/a7dfbf2e4ed66b7ddbc57efca7bb3d9591505c49))
+
+
 ## v0.9.6 (2026-07-28)
 
 ### Bug Fixes
