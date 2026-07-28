@@ -116,6 +116,7 @@ def native_async(func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
     Decorator that wraps a synchronous PyO3 Rust function into a fully
     type-safe, non-blocking async function pre-configured for threadpool execution.
     """
+
     @functools.wraps(func)
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         if kwargs:
@@ -123,6 +124,7 @@ def native_async(func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
         return await asyncio.to_thread(func, *args)
 
     return wrapper
+
 
 # Export pre-wrapped, fully type-safe async native functions
 if HAS_RUST_CORE:
@@ -139,6 +141,7 @@ from typing import Any, ParamSpec, TypeVar
 P = ParamSpec("P")
 R = TypeVar("R")
 T = TypeVar("T")
+
 
 def is_rust_available() -> bool: ...
 def get_rust_core_version() -> str | None: ...
@@ -160,6 +163,7 @@ Because functions are pre-wrapped with `@native_async`, developers simply call t
 from django_bolt import BoltAPI
 from app.native import is_rust_available, process_dataset_batch
 
+
 @api.post("/api/v1/process-batch")
 async def handle_process_batch(payload: BatchPayloadReq) -> BatchPayloadOut:
     if not is_rust_available():
@@ -174,6 +178,7 @@ async def handle_process_batch(payload: BatchPayloadReq) -> BatchPayloadOut:
 ```python
 from app.native import run_native_json
 from app import rust_core
+
 
 @api.post("/api/v1/fast-transform")
 async def handle_fast_transform(payload: HeavyStruct) -> HeavyStructOut:

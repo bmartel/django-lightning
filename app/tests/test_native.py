@@ -6,8 +6,8 @@ from app.native import (
     get_rust_core_version,
     is_rust_available,
     native_async,
+    native_json,
     run_native,
-    run_native_json,
 )
 
 
@@ -48,6 +48,33 @@ async def test_native_async_decorator():
 
 
 @pytest.mark.asyncio
+async def test_native_json_decorator():
+    def echo_json_bytes(raw_json: bytes) -> bytes:
+        return raw_json
+
+    echo_payload = native_json(echo_json_bytes, response_type=SamplePayload)
+    payload = SamplePayload(name="bolt", count=100)
+
+    decoded = await echo_payload(payload)
+    assert decoded.name == "bolt"
+    assert decoded.count == 100
+
+
+@pytest.mark.asyncio
+async def test_native_json_fallback():
+    def python_fallback(payload: SamplePayload) -> SamplePayload:
+        return SamplePayload(name=f"fallback_{payload.name}", count=payload.count * 2)
+
+    echo_fallback = native_json(
+        rust_func=None, response_type=SamplePayload, fallback=python_fallback
+    )
+    payload = SamplePayload(name="test", count=5)
+    res = await echo_fallback(payload)
+    assert res.name == "fallback_test"
+    assert res.count == 10
+
+
+@pytest.mark.asyncio
 async def test_zero_copy_raw_bytes_transfer():
     if not is_rust_available():
         pytest.skip("rust_core module not compiled")
@@ -56,17 +83,3 @@ async def test_zero_copy_raw_bytes_transfer():
     input_data = b"hello django-lightning native rust"
     output_data = await async_process_bytes(input_data)
     assert output_data == input_data
-
-
-@pytest.mark.asyncio
-async def test_run_native_json_transfer():
-    if not is_rust_available():
-        pytest.skip("rust_core module not compiled")
-
-    def echo_json_bytes(raw_json: bytes) -> bytes:
-        return raw_json
-
-    payload = SamplePayload(name="bolt", count=100)
-    decoded = await run_native_json(echo_json_bytes, payload, SamplePayload)
-    assert decoded.name == "bolt"
-    assert decoded.count == 100
