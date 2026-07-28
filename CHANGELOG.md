@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.0 (2026-07-28)
+
+### Features
+
+- **native**: Improve developer ergonomics with native_json decorator factory
+  ([`ebec695`](https://github.com/bmartel/django-lightning/commit/ebec6950aeba65700e0b6181dd06c22a968a5c46))
+
+
 ## v0.7.0 (2026-07-28)
 
 ### Documentation
