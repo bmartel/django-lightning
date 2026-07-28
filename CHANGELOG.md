@@ -1,6 +1,18 @@
 # CHANGELOG
 
 
+## v0.9.8 (2026-07-28)
+
+### Bug Fixes
+
+- **k8s**: Exclude dev-deployment.yaml via ignorePaths and update .kube-linter.yaml exclusions
+  ([`c784866`](https://github.com/bmartel/django-lightning/commit/c784866a3fd5c3dc09f7a16f073bf67ea13bb839))
+
+- **k8s**: Harden securityContext with readOnlyRootFilesystem and addAllBuiltIn in kube-linter
+  config
+  ([`83d0e3b`](https://github.com/bmartel/django-lightning/commit/83d0e3bf838a815259023e9a796a205dd5451d11))
+
+
 ## v0.9.7 (2026-07-28)
 
 ### Bug Fixes
