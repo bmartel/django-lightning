@@ -23,6 +23,18 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - django-lightning
+              topologyKey: kubernetes.io/hostname
       containers:
       - name: api
         image: django-lightning:latest
