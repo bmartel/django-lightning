@@ -12,7 +12,9 @@ Equipped with a **Custom User Model** ready out of the box, in-process **Native 
 
 - **⚡ Blazing Fast Rust API Engine**: Powered by `django-bolt` (`uv run manage.py runbolt`). No `uvicorn` or external server required!
 - **🦀 Native PyO3 Rust Core Interop (`rust_core`)**: In-process Rust acceleration for low-level CPU computations, cryptography, media processing, or heavy data transformations with zero Python GIL overhead.
+- **🗄 High-Performance Rust DB Engine & Model Codegen**: Query PostgreSQL or SQLite directly in Rust via `sqlx` and Tokio. Auto-generate type-safe Rust structs (`UserRow`, `AsyncMigrationRow`) from Django models via `just rust-codegen` (`uv run manage.py generate_rust_models`) to keep Rust synchronized with Django as the single source of truth.
 - **🛡 100% Type-Safe Async Native Functions (`@native_async` & `@native_json`)**: Pre-wrapped Rust functions offering 100% exact type hints, IDE autocomplete, and automatic background thread pool execution.
+
 - **🚀 Ultra-Fast Zero-Copy & Msgspec JSON Bytes FFI**: Pass raw zero-copy byte buffers (`&[u8]`) or UTF-8 JSON byte payloads across C-FFI to bypass Python `PyObject` allocation overhead for **10x–50x speedups**.
 - **🛠 Django Admin Ready Out-of-the-Box**: Native Django Admin interface at `/admin/` configured with `app.User` custom fields (`bio`, `avatar_url`). Run `uv run manage.py createsuperuser` to create your superuser.
 - **👤 Custom User Model & Ready-to-Work Auth**: Includes a production-ready Custom `User` model (`AbstractUser`) configured via `AUTH_USER_MODEL = "app.User"` with JWT auth and profile management out of the box.
@@ -78,7 +80,22 @@ async def handle_process_batch(payload: BatchPayloadReq) -> BatchPayloadOut:
     return BatchPayloadOut(results=results)
 ```
 
-### 4. Optional Rust Scaffolding (`--no-rust`)
+### 4. High-Performance Rust DB Engine & Model Codegen
+In addition to CPU tasks, `rust_core` provides a direct database query engine via `sqlx` and Tokio:
+- **Single Source of Truth**: Django models (`app/models.py`) remain the authoritative database schema.
+- **Model Codegen (`just rust-codegen`)**: `uv run manage.py generate_rust_models` introspects Django models and generates `rust_core/src/db/models.rs` (`UserRow`, `AsyncMigrationRow`) with `sqlx::FromRow` derives.
+- **Zero-GIL Tokio Queries**: Database queries execute within a global static Tokio runtime (`py.allow_threads`), returning serialized JSON bytes parsed by `msgspec` at sub-millisecond speeds.
+
+```python
+from app.native import query_users_native
+
+@api.get("/api/v1/fast-users")
+async def handle_fast_users(limit: int = 100):
+    # Query database directly in Rust using sqlx + Tokio + zero-copy msgspec FFI!
+    return await query_users_native(settings.DATABASES["default"]["NAME"], limit=limit)
+```
+
+### 5. Optional Rust Scaffolding (`--no-rust`)
 Rust integration is completely optional. If a project does not require Rust, pass `--no-rust` when scaffolding:
 ```bash
 create-django-bolt new my-app --no-rust
@@ -86,6 +103,7 @@ create-django-bolt new my-app --no-rust
 The resulting project is generated as a pure Python project stripped of `rust_core/`, `maturin`, and Cargo build steps.
 
 ---
+
 
 ## 🛠 Scaffolding a New Project
 
@@ -222,10 +240,12 @@ Or using `just` shortcuts:
 just test
 just lint
 just format
+just rust-codegen
 just rust-dev
 just rust-build
 just rust-test
 ```
+
 
 ---
 
