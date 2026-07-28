@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.9.3 (2026-07-28)
+
+### Bug Fixes
+
+- **ci**: Compile native extension in CI setup step and add safe import guard in test_native.py
+  ([`e74332d`](https://github.com/bmartel/django-lightning/commit/e74332d77f9e0bc3d904d13fdb37800b925bf6e8))
+
+
 ## v0.9.2 (2026-07-28)
 
 ### Bug Fixes
