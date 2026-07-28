@@ -145,7 +145,8 @@ fn copy_and_transform_dir(
                         "",
                     );
                     if !include_rust {
-                        let rust_tasks = "# Compile Rust core in debug mode for local development\nrust-dev:\n    uv run maturin develop\n\n# Compile Rust core in release mode for production performance\nrust-build:\n    uv run maturin develop --release\n\n# Run unit tests for Rust native core crate\nrust-test:\n    cargo test --manifest-path rust_core/Cargo.toml\n";
+                        let rust_tasks = "# Compile Rust core in debug mode for local development\nrust-dev:\n    uv run maturin develop\n\n# Compile Rust core in release mode for maximum production performance\nrust-build:\n    uv run maturin build --release --manifest-path rust_core/Cargo.toml --out target/wheels && uv pip install target/wheels/*.whl\n\n# Run unit tests for Rust native core crate\nrust-test:\n    cargo test --manifest-path rust_core/Cargo.toml\n";
+
                         transformed = transformed.replace(rust_tasks, "");
                     }
                 }

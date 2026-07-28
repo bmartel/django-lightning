@@ -17,7 +17,8 @@ rust-dev:
 
 # Compile Rust core in release mode for maximum production performance
 rust-build:
-    uv run maturin develop --release
+    uv run maturin build --release --manifest-path rust_core/Cargo.toml --out target/wheels && uv pip install target/wheels/*.whl
+
 
 # Run unit tests for Rust native core crate
 rust-test:
