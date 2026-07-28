@@ -114,13 +114,8 @@ def copy_and_transform(
                         )
                         content = content.replace(rust_tasks, "")
 
-                if not include_rust and file_name == "api.py":
-                    content = content.replace(
-                        "from app.routes.rust_demo import register_rust_routes\n", ""
-                    )
-                    content = content.replace("register_rust_routes(api)\n", "")
-
                 if not include_rust and file_name == "pyproject.toml":
+
                     maturin_build = (
                         "[build-system]\n"
                         'requires = ["maturin>=1.5,<2.0"]\n'

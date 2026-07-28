@@ -1,46 +1,44 @@
 """
-High-Performance Native Rust Interop Layer for Django-Lightning.
+High-Performance Native Rust Interop Module for Django-Lightning.
 
-Provides safe, type-hinted, GIL-releasing native bindings for API handlers and background workers.
-If the rust_core module is not compiled, functions gracefully fall back to Python equivalents.
+Provides core utility functions to safely execute native Rust routines from async API handlers
+and SAQ background worker tasks with zero event-loop blocking.
 """
 
 from __future__ import annotations
 
 import asyncio
+from typing import Any, Callable, TypeVar
+
+R = TypeVar("R")
 
 try:
-    from app import rust_core  # type: ignore
+    from app import rust_core
 
     HAS_RUST_CORE = True
 except ImportError:
-    rust_core = None  # type: ignore
+    rust_core = None
     HAS_RUST_CORE = False
 
 
 def is_rust_available() -> bool:
-    """Check if compiled native Rust core is available in current environment."""
+    """Check if compiled native Rust core is available in the current environment."""
     return HAS_RUST_CORE
 
 
-async def aparallel_transform_strings(items: list[str]) -> list[str]:
-    """
-    Asynchronously transform a list of strings in parallel across CPU cores using Rust.
-    Releases Python GIL to ensure non-blocking execution.
-    """
+def get_rust_core_version() -> str | None:
+    """Return the compiled Rust crate version, or None if Rust is not available."""
     if not HAS_RUST_CORE:
-        # Graceful fallback for non-Rust deployments or uncompiled environments
-        return [s.strip().upper() for s in items]
-
-    return await asyncio.to_thread(rust_core.parallel_transform_strings, items)
+        return None
+    return rust_core.rust_core_version()
 
 
-async def aparallel_sum_floats(values: list[float]) -> float:
+async def run_native(func: Callable[..., R], *args: Any, **kwargs: Any) -> R:
     """
-    Asynchronously sum a list of floats in parallel across CPU cores using Rust.
-    Releases Python GIL to ensure non-blocking execution.
-    """
-    if not HAS_RUST_CORE:
-        return float(sum(values))
+    Execute a native PyO3 Rust function asynchronously in a background thread.
 
-    return await asyncio.to_thread(rust_core.parallel_sum_floats, values)
+    Use this helper in async handlers or SAQ tasks when invoking GIL-releasing Rust functions.
+    """
+    if kwargs:
+        return await asyncio.to_thread(func, *args, **kwargs)
+    return await asyncio.to_thread(func, *args)

@@ -122,11 +122,6 @@ fn copy_and_transform_dir(
             continue;
         }
 
-        // Exclude Rust demo route if user opted out of Rust
-        if !include_rust && rel_path == Path::new("app/routes/rust_demo.py") {
-            continue;
-        }
-
         let target_path = dest_dir.join(rel_path);
 
         if path.is_dir() {
@@ -150,14 +145,9 @@ fn copy_and_transform_dir(
                         "",
                     );
                     if !include_rust {
-                        let rust_tasks = "# Compile Rust core in debug mode for local development\nrust-dev:\n    uv run maturin develop\n\n# Compile Rust core in release mode for maximum production performance\nrust-build:\n    uv run maturin develop --release\n\n# Run unit tests for Rust native core crate\nrust-test:\n    cargo test --manifest-path rust_core/Cargo.toml\n";
+                        let rust_tasks = "# Compile Rust core in debug mode for local development\nrust-dev:\n    uv run maturin develop\n\n# Compile Rust core in release mode for production performance\nrust-build:\n    uv run maturin develop --release\n\n# Run unit tests for Rust native core crate\nrust-test:\n    cargo test --manifest-path rust_core/Cargo.toml\n";
                         transformed = transformed.replace(rust_tasks, "");
                     }
-                }
-
-                if !include_rust && file_name == "api.py" {
-                    transformed = transformed.replace("from app.routes.rust_demo import register_rust_routes\n", "");
-                    transformed = transformed.replace("register_rust_routes(api)\n", "");
                 }
 
                 if !include_rust && file_name == "pyproject.toml" {
@@ -174,6 +164,7 @@ fn copy_and_transform_dir(
     }
     Ok(())
 }
+
 
 fn transform_in_place(
     dest_dir: &Path,

@@ -1,34 +1,18 @@
-//! High-Performance Native Rust Core Extension for Django-Lightning.
+//! Native Rust Core Extension Module for Django-Lightning (`rust_core`).
 //!
-//! Designed for CPU-bound computations, parallel data transformations,
-//! and low-level routines with zero Python GIL contention.
+//! Add custom high-performance PyO3 functions here for low-level CPU computations,
+//! image/crypto processing, or data transformations with zero Python GIL overhead.
 
 use pyo3::prelude::*;
-use rayon::prelude::*;
 
-/// Executes a list of string processing operations in parallel across CPU cores,
-/// explicitly releasing the Python Global Interpreter Lock (GIL).
+/// Returns the version string of the compiled native Rust core crate.
 #[pyfunction]
-fn parallel_transform_strings(py: Python<'_>, items: Vec<String>) -> PyResult<Vec<String>> {
-    py.allow_threads(|| {
-        Ok(items
-            .into_par_iter()
-            .map(|s| s.trim().to_uppercase())
-            .collect())
-    })
+fn rust_core_version() -> PyResult<&'static str> {
+    Ok(env!("CARGO_PKG_VERSION"))
 }
 
-/// Executes parallel vector math metrics, releasing the Python GIL.
-#[pyfunction]
-fn parallel_sum_floats(py: Python<'_>, values: Vec<f64>) -> PyResult<f64> {
-    let sum = py.allow_threads(|| values.par_iter().sum::<f64>());
-    Ok(sum)
-}
-
-/// PyO3 Native Extension Module Entrypoint
 #[pymodule]
 fn rust_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(parallel_transform_strings, m)?)?;
-    m.add_function(wrap_pyfunction!(parallel_sum_floats, m)?)?;
+    m.add_function(wrap_pyfunction!(rust_core_version, m)?)?;
     Ok(())
 }
