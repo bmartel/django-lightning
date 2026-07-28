@@ -15,7 +15,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY --from=rust:1-slim /usr/local/cargo /usr/local/cargo
 COPY --from=rust:1-slim /usr/local/rustup /usr/local/rustup
 
-ENV PATH="/usr/local/cargo/bin:$PATH"
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH="/usr/local/cargo/bin:$PATH"
+
 
 WORKDIR /app
 
