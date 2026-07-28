@@ -1,6 +1,24 @@
 # CHANGELOG
 
 
+## v0.7.0 (2026-07-28)
+
+### Documentation
+
+- **skills**: Update django-bolt-rust-interop skill guidance with comprehensive PyO3 best practices
+  ([`73db4d6`](https://github.com/bmartel/django-lightning/commit/73db4d6ee1424ab238d7112123b6db7b622a2d38))
+
+### Features
+
+- **native**: Add type-safe @native_async decorator and ultra-fast msgspec JSON bytes FFI helper
+  ([`107ff13`](https://github.com/bmartel/django-lightning/commit/107ff1307529eaf82e1874f9567dc0806507ad01))
+
+### Refactoring
+
+- **native**: Replace dummy demo functions with clean interop helpers
+  ([`b7f5fdb`](https://github.com/bmartel/django-lightning/commit/b7f5fdb13da8574b8d396f26ad69b40159a87937))
+
+
 ## v0.6.0 (2026-07-28)
 
 ### Features
