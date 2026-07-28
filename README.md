@@ -2,15 +2,18 @@
 
 > **High-Performance Agentic Starter Template for [Django-Bolt](https://github.com/dj-bolt/django-bolt)**
 
-`django-lightning` is a production-ready, agentic starter project designed for rapidly building, testing, and deploying ultra-high performance APIs powered by **Django 5.x**, **Django-Bolt** (a Rust-powered API framework delivering ~60k+ RPS), and **`uv`** exclusively.
+`django-lightning` is a production-ready, agentic starter project designed for rapidly building, testing, and deploying ultra-high performance APIs powered by **Django 5.x**, **Django-Bolt** (a Rust-powered API framework delivering ~60k+ RPS), **Native PyO3 Rust Extensions**, and **`uv`** exclusively.
 
-Equipped with a **Custom User Model** ready out of the box, a comprehensive set of AI agent skills in `.agents/`, and a master `AGENTS.md` file, this repository enables both human engineers and AI coding assistants to build secure, performant, and scalable applications out of the box with Docker, docker-compose, Kubernetes, and Fly.io.
+Equipped with a **Custom User Model** ready out of the box, in-process **Native Rust Extension Interop (`rust_core`)**, a comprehensive set of AI agent skills in `.agents/`, and a master `AGENTS.md` file, this repository enables both human engineers and AI coding assistants to build secure, performant, and scalable applications out of the box with Docker, docker-compose, Kubernetes, and Fly.io.
 
 ---
 
 ## 🔥 Key Features
 
 - **⚡ Blazing Fast Rust API Engine**: Powered by `django-bolt` (`uv run manage.py runbolt`). No `uvicorn` or external server required!
+- **🦀 Native PyO3 Rust Core Interop (`rust_core`)**: In-process Rust acceleration for low-level CPU computations, cryptography, media processing, or heavy data transformations with zero Python GIL overhead.
+- **🛡 100% Type-Safe Async Native Functions (`@native_async` & `@native_json`)**: Pre-wrapped Rust functions offering 100% exact type hints, IDE autocomplete, and automatic background thread pool execution.
+- **🚀 Ultra-Fast Zero-Copy & Msgspec JSON Bytes FFI**: Pass raw zero-copy byte buffers (`&[u8]`) or UTF-8 JSON byte payloads across C-FFI to bypass Python `PyObject` allocation overhead for **10x–50x speedups**.
 - **🛠 Django Admin Ready Out-of-the-Box**: Native Django Admin interface at `/admin/` configured with `app.User` custom fields (`bio`, `avatar_url`). Run `uv run manage.py createsuperuser` to create your superuser.
 - **👤 Custom User Model & Ready-to-Work Auth**: Includes a production-ready Custom `User` model (`AbstractUser`) configured via `AUTH_USER_MODEL = "app.User"` with JWT auth and profile management out of the box.
 - **🚀 `uv` Exclusively**: Managed exclusively with `uv` for ultra-fast environment setup, package management, script execution, and testing.
@@ -20,65 +23,92 @@ Equipped with a **Custom User Model** ready out of the box, a comprehensive set 
 - **🔀 Built-in Async Migrations**: Native background data backfill framework (`BaseAsyncMigration`, `python manage.py async_migrate`, and SAQ worker integration) for zero-downtime rolling deployments.
 - **📊 High-Volume Batch Processing & PgBouncer Ready**: Zero-memory ballooning patterns (`.values()`, `aiterator()`, keyset pagination) and PgBouncer transaction pooling safety for processing millions of records.
 - **📡 Realtime & Streaming**: Server-Sent Events (SSE) and chunked streaming endpoints.
-
 - **📚 Interactive API Docs**: Built-in Scalar OpenAPI interface rendered at `/docs`.
-- **🛠 Comprehensive Developer Experience**: Managed via `justfile` using `uv` shortcuts.
-- **🐳 Multi-Stage Docker**: Production-optimized multi-stage Dockerfile using `uv`.
-- **☸ Enterprise Kubernetes**: Ready-to-apply K8s manifests in `k8s/` including Deployments, ClusterIP Service, Ingress, Secrets, ConfigMaps, and HPA (HorizontalPodAutoscaler).
-- **🚀 Fly.io Ready**: Single-command deployment with `fly.toml`.
-- **🧠 12 Dedicated Agent Skills**: Comprehensive modular skills in `.agents/skills/` guiding AI agents across every architectural domain.
-
-## 🦀 Scaffolding a New Project via Rust CLI (`create-django-bolt`)
-
-We built a dedicated Rust CLI tool **`create-django-bolt`** located in `cli/`. It compiles to a single, standalone binary with **zero runtime dependencies** (no Node.js, no Cookiecutter).
-
-### 1. Install the CLI Binary
-
-**Option A: 1-Line Standalone Installer (No Rust/Cargo required)**
-- **macOS / Linux**:
-  ```bash
-  curl -fsSL https://raw.githubusercontent.com/bmartel/django-lightning/main/scripts/install-cli.sh | sh
-  ```
-- **Windows (PowerShell)**:
-  ```powershell
-  irm https://raw.githubusercontent.com/bmartel/django-lightning/main/scripts/install-cli.ps1 | iex
-  ```
-
-**Option B: Via Cargo (Rust users)**
-```bash
-cargo install create-django-bolt
-```
-
-**Option C: Build locally from source**
-```bash
-cargo build --manifest-path cli/Cargo.toml --release
-```
-
-
-### 2. Run the Rust CLI Generator
-```bash
-# Interactive or command-line usage
-create-django-bolt new my-app
-
-# Or specify custom target path
-create-django-bolt new my-app -p ~/code/my-app
-```
+- **🐳 Docker Compose & Multi-Stage Docker**: Containerized dev environment with sub-second Cargo build volume caching (`cargo_cache`, `cargo_target`) and multi-stage production builds.
+- **☸ Enterprise Kubernetes**: Ready-to-apply K8s manifests in `k8s/` including Deployments, ClusterIP Service, Ingress, Secrets, ConfigMaps, and HPA.
+- **🧠 13 Dedicated Agent Skills**: Comprehensive modular skills in `.agents/` guiding AI agents across every architectural domain.
 
 ---
 
-## ⚡ Scaffolding via Python Script (Alternative)
+## 🦀 Native PyO3 Rust Interop (`rust_core`)
 
-To quickly scaffold a brand-new project from this starter template:
+When CPU-bound, low-level, or high-throughput tasks require speed beyond Python's Global Interpreter Lock (GIL), `django-lightning` provides an in-process **PyO3 + Maturin Native Extension Architecture** in `rust_core/`.
+
+### 1. Writing Rust Functions with GIL Releasing
+Always release Python's GIL (`py.allow_threads`) so Rayon multithreaded parallel loops run across all CPU cores without blocking `django-bolt`'s async event loop:
+
+```rust
+use pyo3::prelude::*;
+use rayon::prelude::*;
+
+#[pyfunction]
+fn process_dataset_batch(py: Python<'_>, records: Vec<String>) -> PyResult<Vec<String>> {
+    // Release Python GIL: Runs across all CPU cores in parallel
+    let results = py.allow_threads(|| {
+        records
+            .into_par_iter()
+            .map(|s| s.trim().to_uppercase())
+            .collect()
+    });
+
+    Ok(results)
+}
+```
+
+### 2. Type-Safe Python Wrappers (`app/native.py`)
+Expose native functions in Python using `@native_async` or `@native_json` for 100% type safety and automatic non-blocking threadpool execution:
+
+```python
+from app.native import native_async, native_json
+from app import rust_core
+
+# Pre-wrapped 100% type-safe async native functions
+process_batch = native_async(rust_core.process_batch)
+process_payload = native_json(rust_core.process_payload, response_type=MyResponseStruct)
+```
+
+### 3. Invocation in API Routes & Worker Jobs
+Call native functions directly with full IDE autocompletion and non-blocking async execution:
+
+```python
+@api.post("/api/v1/process-batch")
+async def handle_process_batch(payload: BatchPayloadReq) -> BatchPayloadOut:
+    # Direct, type-safe, non-blocking async execution!
+    results = await process_batch(payload.records)
+    return BatchPayloadOut(results=results)
+```
+
+### 4. Optional Rust Scaffolding (`--no-rust`)
+Rust integration is completely optional. If a project does not require Rust, pass `--no-rust` when scaffolding:
+```bash
+create-django-bolt new my-app --no-rust
+```
+The resulting project is generated as a pure Python project stripped of `rust_core/`, `maturin`, and Cargo build steps.
+
+---
+
+## 🛠 Scaffolding a New Project
+
+### Via Rust CLI (`create-django-bolt`)
+Our dedicated Rust CLI tool **`create-django-bolt`** located in `cli/` compiles to a single standalone binary with zero runtime dependencies.
 
 ```bash
-# Using just (shortcut)
+# Install standalone CLI binary (macOS / Linux)
+curl -fsSL https://raw.githubusercontent.com/bmartel/django-lightning/main/scripts/install-cli.sh | sh
+
+# Scaffold new project (with interactive prompt or --no-rust flag)
+create-django-bolt new my-app
+create-django-bolt new my-app --no-rust -p ~/code/my-app
+```
+
+### Via Python Generator Script
+```bash
+# Scaffold via just shortcut
 just new-project my-app ~/code/my-app
 
 # Or using uv directly
 uv run python scripts/create-project.py my-app ~/code/my-app
 ```
-
-This instantly creates a new project directory with updated package names, clean git history, ready for `uv venv` and `uv run manage.py runbolt --dev`.
 
 ---
 
@@ -90,12 +120,14 @@ This instantly creates a new project directory with updated package names, clean
 git clone https://github.com/bmartel/django-lightning.git
 cd django-lightning
 
-# Create virtual environment & install dependencies using uv
+# Create virtual environment & install dependencies
 uv venv
+uv pip install maturin
+uv run maturin develop
 uv pip install -e ".[dev]"
 ```
 
-### 2. Run Database Migrations & Collect Static Files
+### 2. Run Database Migrations
 ```bash
 uv run manage.py migrate
 uv run manage.py collectstatic --noinput
@@ -105,6 +137,7 @@ uv run manage.py collectstatic --noinput
 ```bash
 uv run manage.py runbolt --dev
 ```
+
 Access the application:
 - **API Base**: `http://localhost:8000`
 - **Scalar OpenAPI Docs**: `http://localhost:8000/docs`
@@ -124,7 +157,7 @@ In high-availability production environments, long-running data backfills cause 
 3. **Post-rollout Async DML**: Long-running data backfills run non-blockingly via `BaseAsyncMigration` and SAQ workers.
 
 ```bash
-# List all registered async background data migrations and status
+# List all registered async background data migrations
 uv run manage.py async_migrate --list
 
 # Run an async data migration in the foreground
@@ -132,10 +165,6 @@ uv run manage.py async_migrate --run 0001_example_backfill
 
 # Enqueue an async data migration to the SAQ background worker process
 uv run manage.py async_migrate --enqueue 0001_example_backfill
-
-# Run using just shortcuts
-just list-async-migrations
-just async-migrate 0001_example_backfill
 ```
 
 ---
@@ -156,7 +185,6 @@ To ensure APIs operate at peak performance (~60k+ RPS), all developers and AI ag
 
 ## 🤖 Agentic Capabilities & Skills
 
-
 This repository is optimized for autonomous AI agents (such as Antigravity, Claude Code, Cursor, etc.). Refer to **[`AGENTS.md`](file:///Users/brandonmartel/code/django-lightning/AGENTS.md)** for master guidelines.
 
 ### Available Agent Skills in `.agents/skills/`:
@@ -164,14 +192,15 @@ This repository is optimized for autonomous AI agents (such as Antigravity, Clau
 2. **[`django-bolt-schemas-serializers`](file:///.agents/skills/django-bolt-schemas-serializers/SKILL.md)**: `msgspec.Struct`, `Serializer` validation, field & model validators.
 3. **[`django-bolt-auth-security`](file:///.agents/skills/django-bolt-auth-security/SKILL.md)**: Custom User Model, JWT authentication, permission guards (`@guard`), CORS, rate limiting.
 4. **[`django-bolt-async-orm-db`](file:///.agents/skills/django-bolt-async-orm-db/SKILL.md)**: Async Django ORM (`aget`, `acreate`, `afilter`), PostgreSQL connection pooling.
-5. **[`django-bolt-realtime-mcp`](file:///.agents/skills/django-bolt-realtime-mcp/SKILL.md)**: SSE streaming, WebSockets, and `bolt-mcp` MCP Server implementation.
-6. **[`django-bolt-background-workers`](file:///.agents/skills/django-bolt-background-workers/SKILL.md)**: Ultra-high-throughput async queue worker engine (`SAQ` + Redis) with 10,000+ jobs/sec and ~30MB RAM footprint.
-7. **[`django-bolt-testing-observability`](file:///.agents/skills/django-bolt-testing-observability/SKILL.md)**: In-memory `TestClient` tests, `pytest-asyncio`, OpenAPI docs, logging/timing middleware.
-8. **[`django-bolt-docker`](file:///.agents/skills/django-bolt-docker/SKILL.md)**: Production `Dockerfile`, `.dockerignore`, and `docker-compose.yml`.
-9. **[`django-bolt-kubernetes`](file:///.agents/skills/django-bolt-kubernetes/SKILL.md)**: Production Kubernetes manifests in `k8s/` (Deployment, Service, Ingress, HPA).
-10. **[`django-bolt-fly-io`](file:///.agents/skills/django-bolt-fly-io/SKILL.md)**: Fly.io deployment config `fly.toml` & Fly Postgres integration.
-11. **[`django-bolt-migration`](file:///.agents/skills/django-bolt-migration/SKILL.md)**: Migration guides from FastAPI, DRF, and Django Ninja to Django-Bolt.
-12. **[`agentic-task-orchestration`](file:///.agents/skills/agentic-task-orchestration/SKILL.md)**: Autonomous worktree creation, task implementation, CI pipeline monitoring, automated PR creation, review, and safe backlog merging.
+5. **[`django-bolt-rust-interop`](file:///.agents/skills/django-bolt-rust-interop/SKILL.md)**: PyO3 Rust extension development, GIL releasing (`py.allow_threads`), Rayon multithreading, zero-copy byte buffers, and msgspec JSON FFI.
+6. **[`django-bolt-realtime-mcp`](file:///.agents/skills/django-bolt-realtime-mcp/SKILL.md)**: SSE streaming, WebSockets, and `bolt-mcp` MCP Server implementation.
+7. **[`django-bolt-background-workers`](file:///.agents/skills/django-bolt-background-workers/SKILL.md)**: Ultra-high-throughput async queue worker engine (`SAQ` + Redis) with 10,000+ jobs/sec and ~30MB RAM footprint.
+8. **[`django-bolt-testing-observability`](file:///.agents/skills/django-bolt-testing-observability/SKILL.md)**: In-memory `TestClient` tests, `pytest-asyncio`, OpenAPI docs, logging/timing middleware.
+9. **[`django-bolt-docker`](file:///.agents/skills/django-bolt-docker/SKILL.md)**: Production `Dockerfile`, `.dockerignore`, and `docker-compose.yml`.
+10. **[`django-bolt-kubernetes`](file:///.agents/skills/django-bolt-kubernetes/SKILL.md)**: Production Kubernetes manifests in `k8s/` (Deployment, Service, Ingress, HPA).
+11. **[`django-bolt-fly-io`](file:///.agents/skills/django-bolt-fly-io/SKILL.md)**: Fly.io deployment config `fly.toml` & Fly Postgres integration.
+12. **[`django-bolt-migration`](file:///.agents/skills/django-bolt-migration/SKILL.md)**: Migration guides from FastAPI, DRF, and Django Ninja to Django-Bolt.
+13. **[`agentic-task-orchestration`](file:///.agents/skills/agentic-task-orchestration/SKILL.md)**: Autonomous worktree creation, task implementation, CI pipeline monitoring, automated PR creation, review, and safe backlog merging.
 
 ---
 
@@ -182,17 +211,20 @@ Run tests with `uv`:
 uv run pytest -v
 ```
 
-Run code formatting and linting with `uv`:
+Run code formatting and linting:
 ```bash
 uv run ruff check .
 uv run ruff format .
 ```
 
-Or using `just`:
+Or using `just` shortcuts:
 ```bash
 just test
 just lint
 just format
+just rust-dev
+just rust-build
+just rust-test
 ```
 
 ---
