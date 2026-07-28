@@ -8,9 +8,8 @@ and SAQ background worker tasks with zero event-loop blocking.
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Callable, TypeVar
-
-R = TypeVar("R")
+from collections.abc import Callable
+from typing import Any
 
 try:
     from app import rust_core
@@ -33,7 +32,7 @@ def get_rust_core_version() -> str | None:
     return rust_core.rust_core_version()
 
 
-async def run_native(func: Callable[..., R], *args: Any, **kwargs: Any) -> R:
+async def run_native[R](func: Callable[..., R], *args: Any, **kwargs: Any) -> R:
     """
     Execute a native PyO3 Rust function asynchronously in a background thread.
 

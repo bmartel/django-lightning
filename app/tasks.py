@@ -106,4 +106,3 @@ settings = {
     ],
     "concurrency": 100,  # 100 concurrent async jobs in a single worker process
 }
-
