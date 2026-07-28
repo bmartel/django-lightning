@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.9.1 (2026-07-28)
+
+### Bug Fixes
+
+- **docker**: Use maturin build in release wheel pipeline to fix docker image build step
+  ([`fc3cff0`](https://github.com/bmartel/django-lightning/commit/fc3cff0bbd64389c280b6f7a0f99f75d2fe804fb))
+
+
 ## v0.9.0 (2026-07-28)
 
 ### Features
