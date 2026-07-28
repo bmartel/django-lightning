@@ -211,21 +211,28 @@ When generating projects using `create-django-bolt` CLI or `scripts/create-proje
 FROM python:3.12-slim-bookworm AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential libpq-dev curl cargo rustc && rm -rf /var/lib/apt/lists/*
+    build-essential libpq-dev curl && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=rust:1-slim /usr/local/cargo /usr/local/cargo
+COPY --from=rust:1-slim /usr/local/rustup /usr/local/rustup
+
+ENV PATH="/usr/local/cargo/bin:$PATH"
+
 WORKDIR /app
 
 COPY pyproject.toml README.md ./
 COPY rust_core/ ./rust_core/
 COPY app/ ./app/
 
-# Build PyO3 wheel using cargo caching mounts
+# Build production virtual environment, Rust native extension, and install bytecode
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/app/rust_core/target \
     uv venv /app/.venv && \
     uv pip install maturin && \
-    uv run maturin develop --release && \
+    uv run maturin build --release --manifest-path rust_core/Cargo.toml --out /tmp/wheels && \
+    uv pip install /tmp/wheels/*.whl && \
     uv pip install --compile-bytecode .
 ```
+

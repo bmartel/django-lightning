@@ -9,13 +9,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     curl \
-    cargo \
-    rustc \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=rust:1-slim /usr/local/cargo /usr/local/cargo
+COPY --from=rust:1-slim /usr/local/rustup /usr/local/rustup
+
+ENV PATH="/usr/local/cargo/bin:$PATH"
 
 WORKDIR /app
+
 
 # Copy dependency definition, rust crate, and source code for installation
 COPY pyproject.toml README.md ./
