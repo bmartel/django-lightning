@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: semantic-release-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write
@@ -19,6 +23,13 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.ADMIN_PAT }}
+
+      - name: Rebase with remote main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git rebase origin/main
 
       - name: Python Semantic Release
         uses: python-semantic-release/python-semantic-release@v9.18.1
