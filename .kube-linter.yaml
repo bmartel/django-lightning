@@ -1,5 +1,6 @@
 # Kube-Linter configuration for django-lightning Kubernetes manifests
 checks:
+  addAllBuiltIn: true
   doNotInclude:
     - no-read-only-root-fs
     - latest-tag

@@ -22,8 +22,11 @@ spec:
         runAsUser: 999
       containers:
       - name: schema-migrate
-        image: django-lightning:latest
+        image: django-lightning:v1.0.0
         imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         command: ["uv", "run", "manage.py", "migrate", "--noinput"]
         envFrom:
         - configMapRef:
@@ -37,3 +40,9 @@ spec:
           requests:
             cpu: "100m"
             memory: "128Mi"
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}

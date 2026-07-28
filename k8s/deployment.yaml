@@ -37,8 +37,11 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
       - name: api
-        image: django-lightning:latest
+        image: django-lightning:v1.0.0
         imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         command: ["python", "manage.py", "runbolt", "--host", "0.0.0.0", "--port", "8000", "--processes", "4"]
         ports:
         - containerPort: 8000
@@ -67,3 +70,9 @@ spec:
             port: http
           initialDelaySeconds: 5
           periodSeconds: 5
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}

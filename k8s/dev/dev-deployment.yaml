@@ -19,8 +19,11 @@ spec:
         runAsUser: 999
       containers:
       - name: api
-        image: django-lightning:dev
+        image: django-lightning:v1.0.0
         imagePullPolicy: Never
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         command: ["uv", "run", "manage.py", "runbolt", "--host", "0.0.0.0", "--port", "8000", "--dev"]
         ports:
         - containerPort: 8000
@@ -28,10 +31,13 @@ spec:
         env:
         - name: DEBUG
           value: "1"
-        - name: SECRET_KEY
-          value: "dev-secret-key-change-in-production-1234567890"
         - name: ALLOWED_HOSTS
           value: "*"
+        envFrom:
+        - configMapRef:
+            name: django-lightning-config
+        - secretRef:
+            name: django-lightning-secret
         resources:
           limits:
             cpu: "500m"
@@ -39,3 +45,9 @@ spec:
           requests:
             cpu: "100m"
             memory: "128Mi"
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
