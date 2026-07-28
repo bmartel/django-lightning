@@ -14,6 +14,9 @@ spec:
       labels:
         app: django-lightning-dev
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
       containers:
       - name: api
         image: django-lightning:dev
@@ -30,6 +33,9 @@ spec:
         - name: ALLOWED_HOSTS
           value: "*"
         resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
           requests:
             cpu: "100m"
             memory: "128Mi"

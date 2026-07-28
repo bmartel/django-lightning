@@ -17,6 +17,9 @@ spec:
         component: migration
     spec:
       restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
       containers:
       - name: schema-migrate
         image: django-lightning:latest

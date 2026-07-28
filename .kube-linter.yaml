@@ -1,0 +1,9 @@
+# Kube-Linter configuration for django-lightning Kubernetes manifests
+checks:
+  doNotInclude:
+    # Disable read-only root filesystem requirement since Django requires writable temp/static dirs
+    - "no-read-only-root-fs"
+    # Allow default template image tags (:latest, :dev) prior to CI image tagging
+    - "latest-tag"
+    # Allow explicit dev environment secret variables in dev-deployment.yaml
+    - "env-var-secret"

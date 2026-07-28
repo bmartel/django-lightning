@@ -6,9 +6,11 @@ on:
     paths:
       - 'k8s/**'
       - 'Dockerfile'
+      - '.kube-linter.yaml'
   pull_request:
     paths:
       - 'k8s/**'
+      - '.kube-linter.yaml'
 
 jobs:
   validate-k8s:
@@ -25,3 +27,4 @@ jobs:
         uses: stackrox/kube-linter-action@v1
         with:
           directory: k8s
+          config: .kube-linter.yaml
