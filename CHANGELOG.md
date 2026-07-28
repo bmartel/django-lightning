@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.9.0 (2026-07-28)
+
+### Features
+
+- **native**: Make Rust integration explicit and optimize Docker Compose dev DX
+  ([`de6e99d`](https://github.com/bmartel/django-lightning/commit/de6e99da512309682c58aaef6ca9bc032b5459b6))
+
+
 ## v0.8.0 (2026-07-28)
 
 ### Features
