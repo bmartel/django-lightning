@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.6.0 (2026-07-28)
+
+### Features
+
+- **rust**: Add native Rust interop, optional scaffolding, and agent skill guidance
+  ([`1977696`](https://github.com/bmartel/django-lightning/commit/19776964942290a8721ab36974d5f0ec89218ec4))
+
+
 ## v0.5.0 (2026-07-26)
 
 
