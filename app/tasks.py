@@ -92,6 +92,19 @@ async def process_pending_async_migrations(ctx):
     return {"processed_count": len(results), "results": results}
 
 
+async def run_rust_heavy_batch_task(ctx, values: list[float]):
+    """SAQ background task offloading heavy CPU computation to multithreaded Rust."""
+    from app.native import aparallel_sum_floats, is_rust_available
+
+    total_val = await aparallel_sum_floats(values)
+    return {
+        "status": "success",
+        "sum": total_val,
+        "processed_count": len(values),
+        "engine": "Rust Core" if is_rust_available() else "Python Fallback",
+    }
+
+
 # SAQ Worker Runner Configuration
 settings = {
     "queue": queue,
@@ -99,6 +112,7 @@ settings = {
         send_welcome_email,
         run_async_migration_task,
         process_pending_async_migrations,
+        run_rust_heavy_batch_task,
     ],
     "cron": [
         CronJob(cleanup_expired_sessions, cron="0 * * * *"),  # Runs hourly

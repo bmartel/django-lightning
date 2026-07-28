@@ -82,7 +82,9 @@ When completing specific subtasks, consult and adhere to the relevant skill file
 - **[django-bolt-kubernetes](file:///.agents/skills/django-bolt-kubernetes/SKILL.md)**: Production Kubernetes manifests in `k8s/` (`deployment.yaml`, `service.yaml`, `ingress.yaml`, `configmap.yaml`, `secret.yaml`, `hpa.yaml`).
 - **[django-bolt-fly-io](file:///.agents/skills/django-bolt-fly-io/SKILL.md)**: `fly.toml` configuration, Fly Postgres binding, environment secrets, and deployment.
 - **[django-bolt-migration](file:///.agents/skills/django-bolt-migration/SKILL.md)**: Migration guides from FastAPI, DRF, and Django Ninja to `django-bolt`.
+- **[django-bolt-rust-interop](file:///.agents/skills/django-bolt-rust-interop/SKILL.md)**: Native Rust core extension integration (`rust_core`), PyO3 bindings, GIL releasing (`py.allow_threads`), Rayon parallel processing, optional scaffolding, and packaging best practices.
 - **[agentic-task-orchestration](file:///.agents/skills/agentic-task-orchestration/SKILL.md)**: Autonomous worktree creation, task implementation, CI pipeline monitoring, automated PR creation, review, and safe backlog merging.
+
 
 ---
 

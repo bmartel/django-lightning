@@ -195,10 +195,7 @@ class QueryScalabilityProfiler:
                         if "SCAN TABLE " in detail
                         else detail.split("SCAN ")[-1].split(" ")[0]
                     )
-                    msg = (
-                        f"Unindexed Full Table Scan ('SCAN') "
-                        f"detected on table '{table_name}'."
-                    )
+                    msg = f"Unindexed Full Table Scan ('SCAN') detected on table '{table_name}'."
                     issues.append(msg)
                     fixes.append(f"Add database index on table '{table_name}'.")
 

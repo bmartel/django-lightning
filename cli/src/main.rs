@@ -35,6 +35,10 @@ struct Cli {
     /// Include preconfigured GitHub Actions CI/CD workflows
     #[arg(long, default_value_t = false)]
     github_actions: bool,
+
+    /// Exclude native Rust extension core (rust_core)
+    #[arg(long, default_value_t = false)]
+    no_rust: bool,
 }
 
 #[derive(Subcommand)]
@@ -55,6 +59,10 @@ enum Commands {
         /// Include preconfigured GitHub Actions CI/CD workflows
         #[arg(long, default_value_t = false)]
         github_actions: bool,
+
+        /// Exclude native Rust extension core (rust_core)
+        #[arg(long, default_value_t = false)]
+        no_rust: bool,
     },
 }
 
@@ -75,8 +83,22 @@ fn is_dir_empty(path: &Path) -> bool {
     }
 }
 
-fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snake_name: &str, include_ci: bool) -> Result<()> {
-    let ignored_dirs = [".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "staticfiles", "scratch", "target", "cli", ".worktrees"];
+fn copy_and_transform_dir(
+    src_dir: &Path,
+    dest_dir: &Path,
+    slug_name: &str,
+    snake_name: &str,
+    include_ci: bool,
+    include_rust: bool,
+) -> Result<()> {
+    let mut ignored_dirs = vec![
+        ".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache",
+        "staticfiles", "scratch", "target", "cli", ".worktrees",
+    ];
+    if !include_rust {
+        ignored_dirs.push("rust_core");
+    }
+
     let ignored_files = ["db.sqlite3", "db.sqlite3-journal", ".DS_Store"];
 
     for entry in WalkDir::new(src_dir).into_iter().filter_map(|e| e.ok()) {
@@ -100,6 +122,11 @@ fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snak
             continue;
         }
 
+        // Exclude Rust demo route if user opted out of Rust
+        if !include_rust && rel_path == Path::new("app/routes/rust_demo.py") {
+            continue;
+        }
+
         let target_path = dest_dir.join(rel_path);
 
         if path.is_dir() {
@@ -117,9 +144,26 @@ fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snak
                     .replace("django_lightning", snake_name)
                     .replace("Django Lightning", &slug_name.replace('-', " "));
 
-                // Strip starter CLI build task from generated project's justfile
                 if file_name == "justfile" {
-                    transformed = transformed.replace("\n# Build the Rust CLI tool (create-django-bolt)\nbuild-cli:\n    cargo build --manifest-path cli/Cargo.toml --release\n", "");
+                    transformed = transformed.replace(
+                        "\n# Build the Rust CLI tool (create-django-bolt)\nbuild-cli:\n    cargo build --manifest-path cli/Cargo.toml --release\n",
+                        "",
+                    );
+                    if !include_rust {
+                        let rust_tasks = "# Compile Rust core in debug mode for local development\nrust-dev:\n    uv run maturin develop\n\n# Compile Rust core in release mode for maximum production performance\nrust-build:\n    uv run maturin develop --release\n\n# Run unit tests for Rust native core crate\nrust-test:\n    cargo test --manifest-path rust_core/Cargo.toml\n";
+                        transformed = transformed.replace(rust_tasks, "");
+                    }
+                }
+
+                if !include_rust && file_name == "api.py" {
+                    transformed = transformed.replace("from app.routes.rust_demo import register_rust_routes\n", "");
+                    transformed = transformed.replace("register_rust_routes(api)\n", "");
+                }
+
+                if !include_rust && file_name == "pyproject.toml" {
+                    let maturin_build = "[build-system]\nrequires = [\"maturin>=1.5,<2.0\"]\nbuild-backend = \"maturin\"\n\n[tool.maturin]\nmanifest-path = \"rust_core/Cargo.toml\"\npython-packages = [\"app\"]\nmodule-name = \"app.rust_core\"\n";
+                    transformed = transformed.replace(maturin_build, "");
+                    transformed = transformed.replace("    \"maturin>=1.5.0\",\n", "");
                 }
 
                 fs::write(&target_path, transformed)?;
@@ -131,11 +175,25 @@ fn copy_and_transform_dir(src_dir: &Path, dest_dir: &Path, slug_name: &str, snak
     Ok(())
 }
 
-fn transform_in_place(dest_dir: &Path, slug_name: &str, snake_name: &str, include_ci: bool) -> Result<()> {
-    let ignored_dirs = [".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "staticfiles", "scratch", "target", "cli"];
+fn transform_in_place(
+    dest_dir: &Path,
+    slug_name: &str,
+    snake_name: &str,
+    include_ci: bool,
+    include_rust: bool,
+) -> Result<()> {
+    let mut ignored_dirs = vec![
+        ".git", "git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache",
+        "staticfiles", "scratch", "target", "cli",
+    ];
+    if !include_rust {
+        ignored_dirs.push("rust_core");
+        let _ = fs::remove_dir_all(dest_dir.join("rust_core"));
+        let _ = fs::remove_file(dest_dir.join("app/routes/rust_demo.py"));
+    }
+
     let ignored_files = ["db.sqlite3", "db.sqlite3-journal", ".DS_Store"];
 
-    // Remove starter repo specific release workflow
     let _ = fs::remove_file(dest_dir.join(".github/workflows/release.yml"));
 
     if !include_ci {
@@ -166,7 +224,25 @@ fn transform_in_place(dest_dir: &Path, slug_name: &str, snake_name: &str, includ
                     .replace("Django Lightning", &slug_name.replace('-', " "));
 
                 if file_name == "justfile" {
-                    transformed = transformed.replace("\n# Build the Rust CLI tool (create-django-bolt)\nbuild-cli:\n    cargo build --manifest-path cli/Cargo.toml --release\n", "");
+                    transformed = transformed.replace(
+                        "\n# Build the Rust CLI tool (create-django-bolt)\nbuild-cli:\n    cargo build --manifest-path cli/Cargo.toml --release\n",
+                        "",
+                    );
+                    if !include_rust {
+                        let rust_tasks = "# Compile Rust core in debug mode for local development\nrust-dev:\n    uv run maturin develop\n\n# Compile Rust core in release mode for maximum production performance\nrust-build:\n    uv run maturin develop --release\n\n# Run unit tests for Rust native core crate\nrust-test:\n    cargo test --manifest-path rust_core/Cargo.toml\n";
+                        transformed = transformed.replace(rust_tasks, "");
+                    }
+                }
+
+                if !include_rust && file_name == "api.py" {
+                    transformed = transformed.replace("from app.routes.rust_demo import register_rust_routes\n", "");
+                    transformed = transformed.replace("register_rust_routes(api)\n", "");
+                }
+
+                if !include_rust && file_name == "pyproject.toml" {
+                    let maturin_build = "[build-system]\nrequires = [\"maturin>=1.5,<2.0\"]\nbuild-backend = \"maturin\"\n\n[tool.maturin]\nmanifest-path = \"rust_core/Cargo.toml\"\npython-packages = [\"app\"]\nmodule-name = \"app.rust_core\"\n";
+                    transformed = transformed.replace(maturin_build, "");
+                    transformed = transformed.replace("    \"maturin>=1.5.0\",\n", "");
                 }
 
                 let _ = fs::write(&path, transformed);
@@ -251,6 +327,7 @@ fn run_generator(
     path_opt: Option<PathBuf>,
     template_opt: Option<String>,
     github_actions_flag: bool,
+    no_rust_flag: bool,
 ) -> Result<()> {
     println!("{}", "⚡ create-django-bolt".bold().cyan());
     println!("{}", "   High-Performance Django-Bolt Project Generator\n".dimmed());
@@ -272,6 +349,18 @@ fn run_generator(
     } else if is_tty {
         Confirm::new()
             .with_prompt("Include preconfigured GitHub Actions CI/CD workflows?")
+            .default(true)
+            .interact_opt()?
+            .unwrap_or(true)
+    } else {
+        true
+    };
+
+    let include_rust = if no_rust_flag {
+        false
+    } else if is_tty {
+        Confirm::new()
+            .with_prompt("Include native Rust extension core (rust_core)?")
             .default(true)
             .interact_opt()?
             .unwrap_or(true)
@@ -301,19 +390,25 @@ fn run_generator(
             anyhow::bail!("Template path '{}' does not exist!", src_path.display());
         }
         fs::create_dir_all(&dest_dir)?;
-        copy_and_transform_dir(&src_path, &dest_dir, &slug_name, &snake_name, include_ci)?;
+        copy_and_transform_dir(&src_path, &dest_dir, &slug_name, &snake_name, include_ci, include_rust)?;
     } else if current_dir.join("manage.py").exists() && current_dir.join("pyproject.toml").exists() {
         fs::create_dir_all(&dest_dir)?;
-        copy_and_transform_dir(&current_dir, &dest_dir, &slug_name, &snake_name, include_ci)?;
+        copy_and_transform_dir(&current_dir, &dest_dir, &slug_name, &snake_name, include_ci, include_rust)?;
     } else {
         download_template_from_github(&dest_dir)?;
-        transform_in_place(&dest_dir, &slug_name, &snake_name, include_ci)?;
+        transform_in_place(&dest_dir, &slug_name, &snake_name, include_ci, include_rust)?;
     }
 
     initialize_git(&dest_dir);
 
     if include_ci {
         println!("  {}", "✓ Added GitHub Actions CI/CD workflows (.github/workflows)".green());
+    }
+
+    if include_rust {
+        println!("  {}", "✓ Added Native Rust extension core (rust_core)".green());
+    } else {
+        println!("  {}", "ℹ Python-only project configured (rust_core excluded)".dimmed());
     }
 
     let setup_env = if is_tty {
@@ -338,6 +433,10 @@ fn run_generator(
     if !setup_env {
         println!("  {}. uv venv", step);
         step += 1;
+        if include_rust {
+            println!("  {}. uv run maturin develop", step);
+            step += 1;
+        }
         println!("  {}. uv pip install -e \".[dev]\"", step);
         step += 1;
     }
@@ -359,8 +458,9 @@ fn main() -> Result<()> {
             path,
             template,
             github_actions,
-        }) => run_generator(name, path, template, github_actions)?,
-        None => run_generator(cli.name, cli.path, cli.template, cli.github_actions)?,
+            no_rust,
+        }) => run_generator(name, path, template, github_actions, no_rust)?,
+        None => run_generator(cli.name, cli.path, cli.template, cli.github_actions, cli.no_rust)?,
     }
 
     Ok(())

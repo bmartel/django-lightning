@@ -12,6 +12,7 @@ from app.routes.auth import register_auth_routes
 from app.routes.health import register_health_routes
 from app.routes.mcp_server import setup_mcp_server
 from app.routes.realtime import register_realtime_routes
+from app.routes.rust_demo import register_rust_routes
 
 # Initialize high-performance BoltAPI instance
 api = BoltAPI(
@@ -29,7 +30,8 @@ api = BoltAPI(
         title="Django Lightning API",
         version="1.0.0",
         description=(
-            "High-performance Django-Bolt API with WebSockets, SSE, and MCP server capabilities"
+            "High-performance Django-Bolt API with WebSockets, SSE, MCP server, "
+            "and Native Rust acceleration"
         ),
         path="/docs",
         render_plugins=[ScalarRenderPlugin()],
@@ -41,6 +43,7 @@ api = BoltAPI(
 register_health_routes(api)
 register_auth_routes(api)
 register_realtime_routes(api)
+register_rust_routes(api)
 
 # Mount MCP (Model Context Protocol) Server at /mcp
 setup_mcp_server(api)

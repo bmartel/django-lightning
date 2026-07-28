@@ -9,22 +9,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     curl \
+    cargo \
+    rustc \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Copy dependency definition and source code for installation
+# Copy dependency definition, rust crate, and source code for installation
 COPY pyproject.toml README.md ./
+COPY rust_core/ ./rust_core/
 COPY app/ ./app/
 COPY config/ ./config/
 COPY manage.py .
 
-# Build production virtual environment with bytecode compilation
+# Build production virtual environment, Rust native extension, and install bytecode
 RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/app/rust_core/target \
     uv venv /app/.venv && \
+    uv pip install maturin && \
+    uv run maturin develop --release && \
     uv pip install --compile-bytecode .
+
 
 # ==============================================================================
 # Stage 2: Development Stage (Target: dev)

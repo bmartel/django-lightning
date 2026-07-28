@@ -11,6 +11,19 @@ new-project name dest="":
 build-cli:
     cargo build --manifest-path cli/Cargo.toml --release
 
+# Compile Rust core in debug mode for local development
+rust-dev:
+    uv run maturin develop
+
+# Compile Rust core in release mode for maximum production performance
+rust-build:
+    uv run maturin develop --release
+
+# Run unit tests for Rust native core crate
+rust-test:
+    cargo test --manifest-path rust_core/Cargo.toml
+
+
 # Run local development server using django-bolt (runbolt) via uv
 dev:
     uv run manage.py runbolt --dev

@@ -17,8 +17,18 @@ dependencies = [
     "saq>=0.26.4",
 ]
 
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+manifest-path = "rust_core/Cargo.toml"
+python-packages = ["app"]
+module-name = "app.rust_core"
+
 [project.optional-dependencies]
 dev = [
+    "maturin>=1.5.0",
     "pytest>=8.0.0",
     "pytest-asyncio>=1.4.0",
     "pytest-django>=4.12.0",
@@ -28,6 +38,7 @@ dev = [
 
 [tool.setuptools.packages.find]
 include = ["app*", "config*"]
+
 
 
 [tool.pytest.ini_options]
