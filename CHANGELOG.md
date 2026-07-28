@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v0.9.4 (2026-07-28)
+
+### Bug Fixes
+
+- **docker**: Use official rust:1-slim toolchain image in Dockerfile builder to support Cargo
+  lockfile v4
+  ([`e871934`](https://github.com/bmartel/django-lightning/commit/e871934c499bdc704298dc4051886a516bdbcc13))
+
+
 ## v0.9.3 (2026-07-28)
 
 ### Bug Fixes
