@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v0.9.2 (2026-07-28)
+
+### Bug Fixes
+
+- **build**: Set build-backend to setuptools.build_meta in pyproject.toml to decouple project
+  packaging from maturin crate compilation
+  ([`7d2c4e9`](https://github.com/bmartel/django-lightning/commit/7d2c4e90f77a9476e875201f5e8c3ad57b77b6b5))
+
+
 ## v0.9.1 (2026-07-28)
 
 ### Bug Fixes
