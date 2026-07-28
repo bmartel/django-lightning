@@ -118,14 +118,12 @@ def copy_and_transform(
 
                 if not include_rust and file_name == "pyproject.toml":
                     maturin_build = (
-                        "[build-system]\n"
-                        'requires = ["maturin>=1.5,<2.0"]\n'
-                        'build-backend = "maturin"\n\n'
                         "[tool.maturin]\n"
                         'manifest-path = "rust_core/Cargo.toml"\n'
                         'python-packages = ["app"]\n'
                         'module-name = "app.rust_core"\n'
                     )
+
                     content = content.replace(maturin_build, "")
                     content = content.replace('    "maturin>=1.5.0",\n', "")
 

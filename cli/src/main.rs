@@ -152,7 +152,8 @@ fn copy_and_transform_dir(
                 }
 
                 if !include_rust && file_name == "pyproject.toml" {
-                    let maturin_build = "[build-system]\nrequires = [\"maturin>=1.5,<2.0\"]\nbuild-backend = \"maturin\"\n\n[tool.maturin]\nmanifest-path = \"rust_core/Cargo.toml\"\npython-packages = [\"app\"]\nmodule-name = \"app.rust_core\"\n";
+                    let maturin_build = "[tool.maturin]\nmanifest-path = \"rust_core/Cargo.toml\"\npython-packages = [\"app\"]\nmodule-name = \"app.rust_core\"\n";
+
                     transformed = transformed.replace(maturin_build, "");
                     transformed = transformed.replace("    \"maturin>=1.5.0\",\n", "");
                 }
