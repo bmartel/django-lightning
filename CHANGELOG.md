@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.9.5 (2026-07-28)
+
+### Bug Fixes
+
+- **docker**: Export RUSTUP_HOME and CARGO_HOME in Dockerfile for rustup toolchain resolution
+  ([`76f79f5`](https://github.com/bmartel/django-lightning/commit/76f79f5af7532b375c7c135481ffafcc1119b15a))
+
+
 ## v0.9.4 (2026-07-28)
 
 ### Bug Fixes
