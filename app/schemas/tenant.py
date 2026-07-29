@@ -1,12 +1,12 @@
 import msgspec
 
 
-class OrganizationCreate(msgspec.Struct):
+class TenantCreate(msgspec.Struct):
     name: str
     slug: str
 
 
-class OrganizationOut(msgspec.Struct):
+class TenantOut(msgspec.Struct):
     id: int
     name: str
     slug: str

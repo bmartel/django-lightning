@@ -57,8 +57,8 @@ class AsyncMigration(models.Model):
         return f"{self.name} [{self.status}] ({self.processed_count}/{self.total_count})"
 
 
-class Organization(models.Model):
-    """Multi-tenancy Organization model representing a team or customer account."""
+class Tenant(models.Model):
+    """Multi-tenancy Tenant model representing a workspace, project, or customer scope."""
 
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, db_index=True)
@@ -72,8 +72,8 @@ class Organization(models.Model):
         return self.name
 
 
-class OrganizationMember(models.Model):
-    """Membership mapping connecting Users to Organizations with role-based access control."""
+class TenantMember(models.Model):
+    """Membership mapping connecting Users to Tenants with role-based access control."""
 
     ROLE_OWNER = "OWNER"
     ROLE_ADMIN = "ADMIN"
@@ -85,21 +85,21 @@ class OrganizationMember(models.Model):
         (ROLE_MEMBER, "Member"),
     ]
 
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="members")
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="members")
     user = models.ForeignKey(
-        "app.User", on_delete=models.CASCADE, related_name="organization_memberships"
+        "app.User", on_delete=models.CASCADE, related_name="tenant_memberships"
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_MEMBER)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = [("organization", "user")]
+        unique_together = [("tenant", "user")]
         indexes = [
-            models.Index(fields=["organization", "user"], name="org_member_user_idx"),
+            models.Index(fields=["tenant", "user"], name="tenant_member_user_idx"),
         ]
 
     def __str__(self):
-        return f"{self.user.username} -> {self.organization.name} [{self.role}]"
+        return f"{self.user.username} -> {self.tenant.name} [{self.role}]"
 
 
 class APIKey(models.Model):
