@@ -1,4 +1,7 @@
+import hashlib
+import secrets
 import time
+from typing import Any
 
 import jwt
 from django.conf import settings
@@ -19,7 +22,7 @@ def create_token(user) -> str:
     return jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
 
 
-def decode_token(token: str) -> dict:
+def decode_token(token: str) -> dict[str, Any]:
     """Decode and validate a JWT access token."""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
@@ -30,12 +33,52 @@ def decode_token(token: str) -> dict:
         raise HTTPException(401, "Invalid authorization token")
 
 
-async def get_current_user(request) -> dict:
-    """Dependency that extracts user payload from Authorization header."""
+async def get_current_user(request) -> dict[str, Any]:
+    """Dependency that extracts user payload from Authorization header or X-API-Key."""
+    # Check for X-API-Key header first
+    api_key_header = request.headers.get("X-API-Key", "") or request.headers.get("x-api-key", "")
+    if api_key_header:
+        from app.models import APIKey
+
+        key_hash = hashlib.sha256(api_key_header.encode()).hexdigest()
+        key_obj = (
+            await APIKey.objects.filter(key_hash=key_hash, is_active=True)
+            .select_related("user")
+            .afirst()
+        )
+        if not key_obj:
+            raise HTTPException(401, "Invalid or inactive API key")
+
+        return {
+            "sub": str(key_obj.user.id),
+            "username": key_obj.user.username,
+            "is_staff": key_obj.user.is_staff,
+            "auth_type": "api_key",
+        }
+
+    # Fallback to Bearer JWT token
     auth_header = request.headers.get("authorization", "")
     if not auth_header.startswith("Bearer "):
-        raise HTTPException(401, "Missing or invalid Bearer authentication header")
+        raise HTTPException(401, "Missing or invalid Bearer authentication or X-API-Key header")
 
     token = auth_header.split(" ", 1)[1]
     payload = decode_token(token)
+    payload["auth_type"] = "jwt"
     return payload
+
+
+async def create_api_key(user, name: str = "Default Key"):
+    """Generate and store a new secure API key for programmatic access."""
+    from app.models import APIKey
+
+    raw_secret = f"bolt_{secrets.token_urlsafe(32)}"
+    prefix = raw_secret[:12]
+    key_hash = hashlib.sha256(raw_secret.encode()).hexdigest()
+
+    key_obj = await APIKey.objects.acreate(
+        user=user,
+        name=name,
+        prefix=prefix,
+        key_hash=key_hash,
+    )
+    return key_obj, raw_secret
