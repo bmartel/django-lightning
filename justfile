@@ -22,10 +22,10 @@ rust-dev: rust-codegen
 
 # Compile Rust core in release mode for maximum production performance
 rust-build:
-    uv run maturin build --release --manifest-path rust_core/Cargo.toml --out target/wheels && uv pip install target/wheels/*.whl
+    uv run maturin build --release --manifest-path rust_core/crates/rust_core_pyo3/Cargo.toml --out target/wheels && uv pip install target/wheels/*.whl
 
 
-# Run unit tests for Rust native core crate
+# Run unit tests for Rust native core crate workspace
 rust-test:
     cargo test --manifest-path rust_core/Cargo.toml
 

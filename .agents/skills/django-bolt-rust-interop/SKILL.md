@@ -17,9 +17,37 @@ When lower-level, high-throughput, or CPU-bound operations are required in API h
 
 ---
 
-## 🛠 1. How to Write Native Rust Functions (`rust_core/src/`)
+## 🛠 1. Modular Cargo Workspace Architecture (`rust_core/`)
 
-All native Rust code resides in `rust_core/src/lib.rs` (or sub-modules under `rust_core/src/`).
+`django-lightning` operates with a **Cargo Workspace Architecture** (Pattern 3) by default. This guarantees modularity and prevents single-file code sprawl.
+
+```
+rust_core/
+├── Cargo.toml                       <-- Workspace Manifest ([workspace])
+└── crates/
+    ├── rust_core_pyo3/              <-- PyO3 FFI Binding Crate (cdylib outputting `rust_core`)
+    │   ├── Cargo.toml
+    │   └── src/
+    │       └── lib.rs               <-- #[pymodule] registration ONLY
+    │
+    ├── db_engine/                   <-- Pure Rust Database Engine Crate
+    │   ├── Cargo.toml
+    │   └── src/
+    │       ├── lib.rs
+    │       └── models.rs            <-- Target output of `generate_rust_models`
+    │
+    └── core_utils/                  <-- Pure Rust CPU Acceleration Crate
+        ├── Cargo.toml
+        └── src/
+            └── lib.rs
+```
+
+### Agentic Rule for Adding New Rust Logic
+When creating new native Rust capabilities, agents MUST:
+1. **Create a dedicated domain crate under `rust_core/crates/<domain_crate>`** (e.g. `crates/analytics`, `crates/crypto`, `crates/vector_search`).
+2. Add the crate path to `members` in `rust_core/Cargo.toml`.
+3. Keep business logic pure and testable via `cargo test --manifest-path rust_core/Cargo.toml`.
+4. Declare the domain crate dependency in `rust_core/crates/rust_core_pyo3/Cargo.toml` and bind functions inside `rust_core/crates/rust_core_pyo3/src/lib.rs`.
 
 ### Step 1: Define `#[pyfunction]` with GIL Releasing
 Always wrap CPU-bound operations in `py.allow_threads(|| { ... })`. Releasing the GIL guarantees that Rust's multithreaded parallel loops (`rayon`) execute across all CPU cores without blocking `django-bolt`'s async event loop or `SAQ` worker process.

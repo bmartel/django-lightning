@@ -23,7 +23,7 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.maturin]
-manifest-path = "rust_core/Cargo.toml"
+manifest-path = "rust_core/crates/rust_core_pyo3/Cargo.toml"
 python-packages = ["app"]
 module-name = "app.rust_core"
 

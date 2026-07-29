@@ -2,7 +2,7 @@
 
 Usage:
     python manage.py generate_rust_models
-    python manage.py generate_rust_models --output rust_core/src/db/models.rs
+    python manage.py generate_rust_models --output rust_core/crates/db_engine/src/models.rs
 """
 
 from pathlib import Path
@@ -46,8 +46,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--output",
             type=str,
-            default="rust_core/src/db/models.rs",
-            help="Path to output Rust file (default: rust_core/src/db/models.rs).",
+            default="rust_core/crates/db_engine/src/models.rs",
+            help="Path to output Rust file (default: rust_core/crates/db_engine/src/models.rs).",
         )
         parser.add_argument(
             "--app",
@@ -85,7 +85,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"✓ Successfully generated Rust models for app '{app_name}' at '{output_path}'."
+                f"[OK] Successfully generated Rust models for app '{app_name}' at '{output_path}'."
             )
         )
 

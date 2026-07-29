@@ -51,3 +51,54 @@ impl AsyncMigrationRow {
     pub const TABLE_NAME: &'static str = "app_asyncmigration";
     pub const COLUMNS: &'static [&'static str] = &["id", "name", "status", "batch_size", "processed_count", "total_count", "error_message", "started_at", "completed_at", "created_at", "updated_at"];
 }
+
+/// Generated Rust struct for Django model `Tenant`.
+/// DB Table: `app_tenant`.
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct TenantRow {
+    pub id: i64,
+    pub name: String,
+    pub slug: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl TenantRow {
+    pub const TABLE_NAME: &'static str = "app_tenant";
+    pub const COLUMNS: &'static [&'static str] = &["id", "name", "slug", "created_at", "updated_at"];
+}
+
+/// Generated Rust struct for Django model `TenantMember`.
+/// DB Table: `app_tenantmember`.
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct TenantMemberRow {
+    pub id: i64,
+    pub tenant_id: i64,
+    pub user_id: i64,
+    pub role: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl TenantMemberRow {
+    pub const TABLE_NAME: &'static str = "app_tenantmember";
+    pub const COLUMNS: &'static [&'static str] = &["id", "tenant_id", "user_id", "role", "created_at"];
+}
+
+/// Generated Rust struct for Django model `APIKey`.
+/// DB Table: `app_apikey`.
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct APIKeyRow {
+    pub id: i64,
+    pub name: String,
+    pub prefix: String,
+    pub key_hash: String,
+    pub user_id: i64,
+    pub is_active: bool,
+    pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl APIKeyRow {
+    pub const TABLE_NAME: &'static str = "app_apikey";
+    pub const COLUMNS: &'static [&'static str] = &["id", "name", "prefix", "key_hash", "user_id", "is_active", "expires_at", "created_at"];
+}

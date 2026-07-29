@@ -108,9 +108,9 @@ def copy_and_transform(
                             "# Compile Rust core in release mode for production performance\n"
                             "rust-build:\n"
                             "    uv run maturin build --release "
-                            "--manifest-path rust_core/Cargo.toml "
+                            "--manifest-path rust_core/crates/rust_core_pyo3/Cargo.toml "
                             "--out target/wheels && uv pip install target/wheels/*.whl\n\n"
-                            "# Run unit tests for Rust native core crate\n"
+                            "# Run unit tests for Rust native core crate workspace\n"
                             "rust-test:\n"
                             "    cargo test --manifest-path rust_core/Cargo.toml\n"
                         )
@@ -119,7 +119,7 @@ def copy_and_transform(
                 if not include_rust and file_name == "pyproject.toml":
                     maturin_build = (
                         "[tool.maturin]\n"
-                        'manifest-path = "rust_core/Cargo.toml"\n'
+                        'manifest-path = "rust_core/crates/rust_core_pyo3/Cargo.toml"\n'
                         'python-packages = ["app"]\n'
                         'module-name = "app.rust_core"\n'
                     )

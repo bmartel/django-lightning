@@ -36,7 +36,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=cache,target=/app/rust_core/target \
     uv venv /app/.venv && \
     uv pip install maturin && \
-    uv run maturin build --release --manifest-path rust_core/Cargo.toml --out /tmp/wheels && \
+    uv run maturin build --release --manifest-path rust_core/crates/rust_core_pyo3/Cargo.toml --out /tmp/wheels && \
     uv pip install /tmp/wheels/*.whl && \
     uv pip install --compile-bytecode .
 

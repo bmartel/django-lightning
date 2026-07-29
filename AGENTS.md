@@ -57,12 +57,12 @@ Welcome agent. This repository is **django-lightning**, a high-performance start
 - **WebSockets & SSE**: Use `@api.get(...)` returning `StreamingResponse` for SSE, or `@api.websocket(...)` for WebSockets.
 - **bolt-mcp**: MCP server tools, resources, and prompts are mounted at `/mcp` using `api.mount_mcp(mcp)` via the `bolt-mcp` package.
 
-### 7. Zero-Downtime Rolling Deployments & Async Migration Management
-- **Never run heavy data backfills in container init scripts or release locks**: Init containers block rolling updates and cause timeouts or table lockouts.
-- **2-Phase Migration Paradigm**:
-  1. **Pre-rollout Schema DDL**: Run `uv run manage.py migrate` via standalone jobs (`k8s/job-migration.yaml` or Fly `release_command`).
-  2. **Post-rollout Async DML Data Backfill**: Use `uv run manage.py async_migrate` or SAQ background worker (`run_async_migration_task`) to run data backfills in non-blocking batches.
-- **Async Migration Subsystem**: All background migrations inherit from `BaseAsyncMigration` in `app/async_migrations/` and track progress in `app.models.AsyncMigration`.
+### 8. Modular Cargo Workspace Architecture for Rust Extensions (`rust_core`)
+- **Pattern 3 Cargo Workspace Default**: `rust_core` MUST be structured as a Cargo Workspace (`rust_core/Cargo.toml`).
+- **Domain Crate Isolation**: Do not put business logic into a single monolithic file. All Rust features MUST be developed in isolated domain crates under `rust_core/crates/<domain_crate>` (e.g. `crates/db_engine`, `crates/core_utils`, `crates/analytics`).
+- **PyO3 FFI Binding Crate**: Maturin builds `rust_core/crates/rust_core_pyo3/Cargo.toml` as the `cdylib` Python module, delegating calls to workspace crates.
+- **Model Codegen**: Run `uv run manage.py generate_rust_models` to update Django struct definitions in `rust_core/crates/db_engine/src/models.rs`.
+- **Workspace Testing**: Run `cargo test --manifest-path rust_core/Cargo.toml` to execute unit tests across all workspace crates simultaneously.
 
 
 ---
