@@ -30,6 +30,8 @@ module-name = "app.rust_core"
 [project.optional-dependencies]
 dev = [
     "maturin>=1.5.0",
+    "mypy>=1.10.0",
+    "django-stubs>=5.0.0",
     "pytest>=8.0.0",
     "pytest-asyncio>=1.4.0",
     "pytest-django>=4.12.0",
@@ -39,6 +41,21 @@ dev = [
 
 [tool.setuptools.packages.find]
 include = ["app*", "config*"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = false
+warn_unused_configs = true
+ignore_missing_imports = true
+plugins = ["mypy_django_plugin.main"]
+exclude = ["app/migrations/.*"]
+
+[tool.mypy_django_plugin]
+ignore_missing_model_attributes = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
+
 
 
 

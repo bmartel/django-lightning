@@ -56,3 +56,5 @@ class LatencyBudgetMiddleware(BaseMiddleware):
                 raise LatencyBudgetExceededError(msg)
 
         return response
+
+

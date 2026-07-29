@@ -22,10 +22,10 @@ class UserAdmin(BaseUserAdmin):
     ordering = ("-date_joined",)
 
     # Include custom bio & avatar_url in admin detail view
-    fieldsets = BaseUserAdmin.fieldsets + (
+    fieldsets = tuple(BaseUserAdmin.fieldsets or ()) + (
         ("Profile Information", {"fields": ("bio", "avatar_url")}),
     )
-    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+    add_fieldsets = tuple(BaseUserAdmin.add_fieldsets or ()) + (
         ("Profile Information", {"fields": ("bio", "avatar_url")}),
     )
 

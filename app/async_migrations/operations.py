@@ -36,7 +36,7 @@ class RunAsyncMigration(Operation):
         self.sync = sync
 
     def deconstruct(self) -> tuple[str, list[Any], dict[str, Any]]:
-        kwargs = {"name": self.name}
+        kwargs: dict[str, Any] = {"name": self.name}
         if self.sync:
             kwargs["sync"] = self.sync
         return (

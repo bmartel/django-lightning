@@ -34,7 +34,7 @@ async def akeyset_chunker[T: Model](
     last_pk: Any = None
     gt_filter = f"{pk_field}__gt"
 
-    base_qs = queryset.order_by(pk_field)
+    base_qs: Any = queryset.order_by(pk_field)
     if use_values:
         if fields:
             base_qs = base_qs.values(*fields)

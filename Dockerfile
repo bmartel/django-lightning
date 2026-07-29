@@ -81,7 +81,8 @@ COPY --from=builder /app/.venv /app/.venv
 COPY . /app
 
 # Collect static files for Django Admin using virtualenv python directly
-RUN chown -R django:django /app && \
+RUN mkdir -p /app/staticfiles && \
+    chown -R django:django /app && \
     SECRET_KEY=build-dummy-key-12345 /app/.venv/bin/python manage.py collectstatic --noinput
 
 USER django

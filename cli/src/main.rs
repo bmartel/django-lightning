@@ -122,6 +122,11 @@ fn copy_and_transform_dir(
             continue;
         }
 
+        // Exclude Rust demo route if user opted out
+        if !include_rust && rel_path == Path::new("app/routes/rust_demo.py") {
+            continue;
+        }
+
         let target_path = dest_dir.join(rel_path);
 
         if path.is_dir() {
@@ -149,6 +154,11 @@ fn copy_and_transform_dir(
 
                         transformed = transformed.replace(rust_tasks, "");
                     }
+                }
+
+                if !include_rust && file_name == "api.py" {
+                    transformed = transformed.replace("from app.routes.rust_demo import register_rust_routes\n", "");
+                    transformed = transformed.replace("register_rust_routes(api)\n", "");
                 }
 
                 if !include_rust && file_name == "pyproject.toml" {

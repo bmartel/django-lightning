@@ -70,6 +70,13 @@ test:
 lint:
     uv run ruff check .
 
+# Run static type checking with mypy via uv
+check-types:
+    uv run mypy app config
+
+# Run full project verification suite (linting, type checking, pytest, rust tests)
+check: lint check-types test rust-test
+
 # Fix linting errors via uv
 format:
     uv run ruff format .

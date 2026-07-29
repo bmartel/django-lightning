@@ -10,7 +10,7 @@ from app.native import (
 )
 
 try:
-    from app import rust_core
+    from app import rust_core  # type: ignore[attr-defined]
 except ImportError:
     rust_core = None
 
