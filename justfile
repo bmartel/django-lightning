@@ -34,9 +34,18 @@ rust-test:
 dev:
     uv run manage.py runbolt --dev
 
+# Run all local development services concurrently (API + SAQ Worker)
+dev-all:
+    uv run python scripts/dev_launcher.py
+
+# Seed synthetic test users and data for local development
+seed count="50":
+    uv run manage.py seed_db --users {{count}}
+
 # Run high-performance SAQ background job worker process
 worker:
     uv run saq app.tasks.settings
+
 
 # Run database migrations via uv
 migrate:

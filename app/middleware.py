@@ -2,6 +2,7 @@
 
 import logging
 import time
+import uuid
 from typing import Any
 
 from django_bolt import BaseMiddleware, Request, Response
@@ -99,12 +100,14 @@ class LatencyBudgetMiddleware(BaseMiddleware):
 
     async def process_request(self, request: Request) -> Response:
         start_time = time.perf_counter()
+        trace_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:16]
 
         response = await self.get_response(request)
 
         elapsed_ms = (time.perf_counter() - start_time) * 1000.0
         passed = elapsed_ms <= self.max_latency_ms
 
+        response.headers["X-Request-ID"] = trace_id
         response.headers["X-Response-Time-Ms"] = f"{elapsed_ms:.2f}"
         response.headers["X-Latency-Budget-Passed"] = "true" if passed else "false"
 
