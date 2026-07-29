@@ -8,6 +8,7 @@ from django_bolt import (
 )
 
 from app.middleware import LatencyBudgetMiddleware
+from app.routes.article import register_article_routes
 from app.routes.auth import register_auth_routes
 from app.routes.health import register_health_routes
 from app.routes.mcp_server import setup_mcp_server
@@ -44,6 +45,7 @@ register_health_routes(api)
 register_auth_routes(api)
 register_tenant_routes(api)
 register_realtime_routes(api)
+register_article_routes(api)
 
 
 # Mount MCP (Model Context Protocol) Server at /mcp

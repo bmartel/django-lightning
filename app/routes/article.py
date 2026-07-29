@@ -28,3 +28,16 @@ def register_article_routes(api: BoltAPI):
         for field in payload.__struct_fields__:
             data[field] = getattr(payload, field)
         return data
+
+    @api.get(
+        "/api/native/version",
+        tags=["Native Rust"],
+        summary="Get PyO3 Rust extension version",
+    )
+    async def get_native_version():
+        from app.native import get_rust_core_version, is_rust_available
+
+        return {
+            "rust_available": is_rust_available(),
+            "version": get_rust_core_version(),
+        }

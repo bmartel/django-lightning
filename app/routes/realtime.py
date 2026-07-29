@@ -29,7 +29,7 @@ def register_realtime_routes(api: BoltAPI):
     )
     async def stream_text():
         async def text_chunks():
-            words = ["Django-Bolt", "delivers", "blazing", "fast", "60k+", "RPS", "APIs!"]
+            words = ["Django-Bolt", "delivers", "ultra-low", "latency", "sub-5ms", "APIs!"]
             for word in words:
                 await asyncio.sleep(0.3)
                 yield f"{word} "
