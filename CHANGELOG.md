@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.11.0 (2026-07-29)
+
+### Documentation
+
+- **readme**: Add Rust DB Engine & model codegen documentation
+  ([`3f3c601`](https://github.com/bmartel/django-lightning/commit/3f3c601bdbfffa69ae7b2873ccdcc5b021313530))
+
+### Features
+
+- Enhance agentic DX, type safety, health profiling, and CLI scaffolding parity
+  ([`fe7a4f8`](https://github.com/bmartel/django-lightning/commit/fe7a4f8ae9d9884a70053ae3d8a77a7bfa9eecc4))
+
+
 ## v0.10.0 (2026-07-28)
 
 ### Features
