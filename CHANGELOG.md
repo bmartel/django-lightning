@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.13.0 (2026-07-29)
+
+### Features
+
+- Add synthetic DB seeder, multi-service dev launcher, and correlation telemetry (Phase 2)
+  ([`5d66e86`](https://github.com/bmartel/django-lightning/commit/5d66e86aae97c00438a2e25d4f7f0a9265b10699))
+
+
 ## v0.12.0 (2026-07-29)
 
 ### Features
