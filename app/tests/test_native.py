@@ -34,6 +34,9 @@ async def test_native_interop_helpers():
 
 @pytest.mark.asyncio
 async def test_run_native_executor():
+    if not is_rust_available():
+        pytest.skip("rust_core module not compiled")
+
     def sample_func(a: int, b: int) -> int:
         return a + b
 
@@ -43,6 +46,9 @@ async def test_run_native_executor():
 
 @pytest.mark.asyncio
 async def test_native_async_decorator():
+    if not is_rust_available():
+        pytest.skip("rust_core module not compiled")
+
     def add_numbers(x: int, y: int) -> int:
         return x + y
 
@@ -53,6 +59,9 @@ async def test_native_async_decorator():
 
 @pytest.mark.asyncio
 async def test_native_json_decorator():
+    if not is_rust_available():
+        pytest.skip("rust_core module not compiled")
+
     def echo_json_bytes(raw_json: bytes) -> bytes:
         return raw_json
 

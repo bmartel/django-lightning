@@ -84,12 +84,23 @@ DATABASES = {
 
 # Cache & Redis configuration
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": REDIS_URL,
+USE_REDIS_CACHE = os.environ.get("USE_REDIS_CACHE", "0").lower() in ("1", "true", "yes", "on")
+
+if USE_REDIS_CACHE:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "django-lightning-cache",
+        }
+    }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -145,4 +156,3 @@ LOGGING = {
         "level": "INFO" if not DEBUG else "DEBUG",
     },
 }
-

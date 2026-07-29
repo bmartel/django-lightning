@@ -101,7 +101,6 @@ class Command(BaseCommand):
             f"pub struct {struct_name} {{",
         ]
 
-
         field_names = []
         for field in model._meta.get_fields():
             if not field.concrete or field.many_to_many:

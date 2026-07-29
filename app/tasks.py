@@ -13,8 +13,10 @@ from django.conf import settings as django_settings
 from saq import CronJob, Queue
 
 # Initialize SAQ Queue using Redis connection string
-REDIS_URL = os.getenv(
-    "REDIS_URL", getattr(django_settings, "REDIS_URL", "redis://localhost:6379/0")
+REDIS_URL = (
+    os.getenv("REDIS_URL")
+    or getattr(django_settings, "REDIS_URL", None)
+    or "redis://localhost:6379/0"
 )
 queue = Queue.from_url(REDIS_URL, name="lightning_jobs")
 

@@ -64,7 +64,6 @@ async def test_rust_db_query_users():
         raise
 
 
-
 @pytest.mark.asyncio
 async def test_rust_db_query_users_file_db():
     """Verify Rust DB query engine against a file-backed SQLite database."""

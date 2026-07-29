@@ -42,4 +42,3 @@ def register_health_routes(api: BoltAPI):
             "cache": "connected" if cache_ok else "disconnected",
             "version": "0.1.0",
         }
-

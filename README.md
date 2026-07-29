@@ -89,6 +89,7 @@ In addition to CPU tasks, `rust_core` provides a direct database query engine vi
 ```python
 from app.native import query_users_native
 
+
 @api.get("/api/v1/fast-users")
 async def handle_fast_users(limit: int = 100):
     # Query database directly in Rust using sqlx + Tokio + zero-copy msgspec FFI!
