@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.15.0 (2026-07-29)
+
+### Features
+
+- Add APIKey authentication helper and multi-auth dependency
+  ([`2eb598a`](https://github.com/bmartel/django-lightning/commit/2eb598a28b9cce304d6dc1be90fc46d1f9c9b6a8))
+
+### Refactoring
+
+- Replace Organization with general Tenant model and remove async storage module
+  ([`3f87f8e`](https://github.com/bmartel/django-lightning/commit/3f87f8eb7ab05e29e06054875ea33b7f7d205bd6))
+
+
 ## v0.14.0 (2026-07-29)
 
 ### Features
