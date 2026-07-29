@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.12.0 (2026-07-29)
+
+### Features
+
+- Expand MCP server tools, add async response caching, and resource generator CLI (Phase 1)
+  ([`557c8b4`](https://github.com/bmartel/django-lightning/commit/557c8b44ec8da25d3120605f6f327369fcd9dc81))
+
+
 ## v0.11.0 (2026-07-29)
 
 ### Documentation
