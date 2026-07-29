@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.14.0 (2026-07-29)
+
+### Features
+
+- Add multi-tenancy organizations, API keys, and async object storage baseline (Phase 3)
+  ([`7054bbb`](https://github.com/bmartel/django-lightning/commit/7054bbbeb79087a89fbe0b50dc7fda0dc73714c1))
+
+
 ## v0.13.0 (2026-07-29)
 
 ### Features
