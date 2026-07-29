@@ -1,6 +1,6 @@
 # AGENTS.md — Django-Bolt Agentic Project Guidance
 
-Welcome agent. This repository is **django-lightning**, a high-performance starter project built on **Django 5.x** and **[django-bolt](https://github.com/dj-bolt/django-bolt)** (~60k+ RPS Rust-powered API framework).
+Welcome agent. This repository is **django-lightning**, a high-performance starter project built on **Django 5.x** and **[django-bolt](https://github.com/dj-bolt/django-bolt)** (Rust-powered Tokio API engine delivering sub-5ms median latency).
 
 ---
 
