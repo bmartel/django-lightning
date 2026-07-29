@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.17.0 (2026-07-29)
+
+### Documentation
+
+- Overhaul README with realistic median benchmark metrics and clean typography
+  ([`fec75ad`](https://github.com/bmartel/django-lightning/commit/fec75adecbbe8adb28cd40149a9c6bb9a6cd4379))
+
+### Features
+
+- Register article and native Rust version endpoints and update realtime stream text
+  ([`d62c89b`](https://github.com/bmartel/django-lightning/commit/d62c89b9570ebf593aa3ade88ca45f0bcfe1e483))
+
+
 ## v0.16.0 (2026-07-29)
 
 ### Documentation
