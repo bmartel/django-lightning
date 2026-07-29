@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.16.0 (2026-07-29)
+
+### Documentation
+
+- Update AGENTS.md and README.md with new CLI commands and features
+  ([`4a640cc`](https://github.com/bmartel/django-lightning/commit/4a640cc816cf81447a015fd09a78f48103874291))
+
+### Features
+
+- **rust_core**: Refactor to Pattern 3 Cargo Workspace Architecture by default
+  ([`bf3b410`](https://github.com/bmartel/django-lightning/commit/bf3b410567f161808c0b4b0c7296d02082b3d169))
+
+
 ## v0.15.0 (2026-07-29)
 
 ### Features
