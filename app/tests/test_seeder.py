@@ -15,4 +15,3 @@ def test_seed_db_command():
     # Sequential seeding run adds another 10 unique synthetic records
     call_command("seed_db", users=10)
     assert User.objects.count() == new_count + 10
-

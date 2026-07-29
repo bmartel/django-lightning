@@ -11,6 +11,7 @@ from app.middleware import LatencyBudgetMiddleware
 from app.routes.auth import register_auth_routes
 from app.routes.health import register_health_routes
 from app.routes.mcp_server import setup_mcp_server
+from app.routes.organizations import register_organization_routes
 from app.routes.realtime import register_realtime_routes
 
 # Initialize high-performance BoltAPI instance
@@ -41,6 +42,7 @@ api = BoltAPI(
 # Register route modules
 register_health_routes(api)
 register_auth_routes(api)
+register_organization_routes(api)
 register_realtime_routes(api)
 
 

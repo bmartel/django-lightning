@@ -55,3 +55,66 @@ class AsyncMigration(models.Model):
 
     def __str__(self):
         return f"{self.name} [{self.status}] ({self.processed_count}/{self.total_count})"
+
+
+class Organization(models.Model):
+    """Multi-tenancy Organization model representing a team or customer account."""
+
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class OrganizationMember(models.Model):
+    """Membership mapping connecting Users to Organizations with role-based access control."""
+
+    ROLE_OWNER = "OWNER"
+    ROLE_ADMIN = "ADMIN"
+    ROLE_MEMBER = "MEMBER"
+
+    ROLE_CHOICES = [
+        (ROLE_OWNER, "Owner"),
+        (ROLE_ADMIN, "Admin"),
+        (ROLE_MEMBER, "Member"),
+    ]
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="members")
+    user = models.ForeignKey(
+        "app.User", on_delete=models.CASCADE, related_name="organization_memberships"
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_MEMBER)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("organization", "user")]
+        indexes = [
+            models.Index(fields=["organization", "user"], name="org_member_user_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} -> {self.organization.name} [{self.role}]"
+
+
+class APIKey(models.Model):
+    """Authentication API keys for service-to-service and programmatic API access."""
+
+    name = models.CharField(max_length=255)
+    prefix = models.CharField(max_length=16, db_index=True)
+    key_hash = models.CharField(max_length=128, unique=True, db_index=True)
+    user = models.ForeignKey("app.User", on_delete=models.CASCADE, related_name="api_keys")
+    is_active = models.BooleanField(default=True, db_index=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"APIKey {self.name} ({self.prefix}...)"
