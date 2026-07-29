@@ -96,6 +96,9 @@ This project uses `just` (or `uv`) for all tasks:
 - **Scaffold New Project (Rust CLI)**: `create-django-bolt new <name> [-p dest]`
 - **Scaffold New Project (Script)**: `just new-project <name> [dest]` (or `uv run python scripts/create-project.py <name> [dest]`)
 - **Start Local Server**: `just dev` (or `uv run manage.py runbolt --dev`)
+- **Start All Local Services**: `just dev-all` (concurrently starts API dev server + SAQ worker)
+- **Scaffold Resource Domain**: `uv run manage.py generate_resource <ModelName> --fields "..."`
+- **Seed Synthetic Data**: `just seed count=100` (or `uv run manage.py seed_db --users 100`)
 - **Start Background Worker**: `just worker` (or `uv run saq app.tasks.settings`)
 - **Run Tests**: `just test` (or `uv run pytest -v`)
 - **Run Linting**: `just lint` (or `uv run ruff check .`)
@@ -104,6 +107,7 @@ This project uses `just` (or `uv`) for all tasks:
 - **Docker Development**: `just docker-up` and `just docker-down`
 - **Deploy to Fly.io**: `just deploy-fly`
 - **Deploy to Kubernetes**: `just k8s-apply`
+
 
 ---
 

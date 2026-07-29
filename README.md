@@ -19,7 +19,12 @@ Equipped with a **Custom User Model** ready out of the box, in-process **Native 
 - **🛠 Django Admin Ready Out-of-the-Box**: Native Django Admin interface at `/admin/` configured with `app.User` custom fields (`bio`, `avatar_url`). Run `uv run manage.py createsuperuser` to create your superuser.
 - **👤 Custom User Model & Ready-to-Work Auth**: Includes a production-ready Custom `User` model (`AbstractUser`) configured via `AUTH_USER_MODEL = "app.User"` with JWT auth and profile management out of the box.
 - **🚀 `uv` Exclusively**: Managed exclusively with `uv` for ultra-fast environment setup, package management, script execution, and testing.
-- **🤖 Built-in MCP Server (`bolt-mcp`)**: Native Streamable HTTP Model Context Protocol server mounted at `/mcp` exposing tools, resources, and prompts to AI clients (Claude Desktop, MCP Inspector, etc.).
+- **🤖 Built-in Agentic MCP Control Suite (`bolt-mcp`)**: Native Streamable HTTP Model Context Protocol server mounted at `/mcp` exposing `inspect_db_schema`, `run_query_explain`, `get_async_migration_status`, `enqueue_saq_job`, and `get_latency_metrics` to AI pair-programming clients.
+- **⚡ Resource Domain Scaffolding CLI**: Generate msgspec Struct schemas, async route handlers, and unit tests in seconds via `uv run manage.py generate_resource <ModelName> --fields "..."`.
+- **🏎️ Ultra-Fast Async Response Caching (`@cache_response`)**: Handler caching decorator powered by msgspec binary JSON serialization with zero-config `LocMemCache` / Redis backend.
+- **🌱 Synthetic Data Seeding Engine (`seed_db`)**: Seed mock data and test users in high-speed bulk batches for performance testing via `just seed count=100` (`uv run manage.py seed_db`).
+- **🚀 Multi-Service Developer Orchestrator (`just dev-all`)**: Concurrently start and supervise API dev server and SAQ background worker with signal trapping via `just dev-all`.
+- **🏢 Multi-Tenant Scope & API Key Baselines**: Built-in `Tenant` and `TenantMember` models with `X-Tenant-Slug` guards, `/api/tenants` routes, and `X-API-Key` programmatic authentication out of the box.
 - **📦 Ultra-Fast Data Validation**: Uses `msgspec.Struct` (10-20x faster than Pydantic) and `django_bolt.serializers.Serializer`.
 - **🔄 Async-First ORM**: Leverages Django's native async ORM (`aget`, `acreate`, `afilter`, `aupdate`, `adelete`).
 - **🔀 Built-in Async Migrations**: Native background data backfill framework (`BaseAsyncMigration`, `python manage.py async_migrate`, and SAQ worker integration) for zero-downtime rolling deployments.
@@ -28,7 +33,8 @@ Equipped with a **Custom User Model** ready out of the box, in-process **Native 
 - **📚 Interactive API Docs**: Built-in Scalar OpenAPI interface rendered at `/docs`.
 - **🐳 Docker Compose & Multi-Stage Docker**: Containerized dev environment with sub-second Cargo build volume caching (`cargo_cache`, `cargo_target`) and multi-stage production builds.
 - **☸ Enterprise Kubernetes**: Ready-to-apply K8s manifests in `k8s/` including Deployments, ClusterIP Service, Ingress, Secrets, ConfigMaps, and HPA.
-- **🧠 13 Dedicated Agent Skills**: Comprehensive modular skills in `.agents/` guiding AI agents across every architectural domain.
+- **🧠 14 Dedicated Agent Skills**: Comprehensive modular skills in `.agents/` guiding AI agents across every architectural domain.
+
 
 ---
 
