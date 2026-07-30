@@ -12,6 +12,22 @@ updates:
     schedule:
       interval: "weekly"
 
+  # Maintain Rust core workspace dependencies
+  - package-ecosystem: "cargo"
+    directory: "/rust_core/crates/rust_core_pyo3"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "cargo"
+    directory: "/rust_core/crates/db_engine"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "cargo"
+    directory: "/rust_core/crates/core_utils"
+    schedule:
+      interval: "weekly"
+
   # Maintain GitHub Actions workflow dependencies
   - package-ecosystem: "github-actions"
     directory: "/"

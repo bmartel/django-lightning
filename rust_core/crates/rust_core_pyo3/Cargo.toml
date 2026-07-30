@@ -8,6 +8,6 @@ name = "rust_core"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.22", features = ["extension-module", "abi3-py312"] }
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py312"] }
 db_engine = { path = "../db_engine" }
 core_utils = { path = "../core_utils" }
