@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.18.1 (2026-07-30)
+
+### Bug Fixes
+
+- **k8s**: Resolve kube-linter security and resource rules in caddy-ingress.yaml
+  ([`f448391`](https://github.com/bmartel/django-lightning/commit/f4483916e18bf4fcd015b2283a719ebb05cfa879))
+
+
 ## v0.18.0 (2026-07-30)
 
 ### Features
