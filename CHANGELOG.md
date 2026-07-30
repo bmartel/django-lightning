@@ -1,6 +1,299 @@
 # CHANGELOG
 
 
+## v0.18.2 (2026-07-30)
+
+### Bug Fixes
+
+- **security**: Resolve CodeQL alerts for API key hashing and workflow permissions
+  ([`3dbe318`](https://github.com/bmartel/django-lightning/commit/3dbe31849a4f625b2c0cba29628484259fd5f1c3))
+
+### Chores
+
+- **deps**: Bump actions/checkout from 4 to 7
+  ([#16](https://github.com/bmartel/django-lightning/pull/16),
+  [`d7c1727`](https://github.com/bmartel/django-lightning/commit/d7c1727a03350225096fcb13447589f3aa710aa0))
+
+Bumps [actions/checkout](https://github.com/actions/checkout) from 4 to 7. - [Release
+  notes](https://github.com/actions/checkout/releases) -
+  [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/actions/checkout/compare/v4...v7)
+
+--- updated-dependencies: - dependency-name: actions/checkout dependency-version: '7'
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump actions/download-artifact from 4 to 8
+  ([#17](https://github.com/bmartel/django-lightning/pull/17),
+  [`c682aa2`](https://github.com/bmartel/django-lightning/commit/c682aa2e3a89e3834d1dc95e64d623343275f36e))
+
+Bumps [actions/download-artifact](https://github.com/actions/download-artifact) from 4 to 8. -
+  [Release notes](https://github.com/actions/download-artifact/releases) -
+  [Commits](https://github.com/actions/download-artifact/compare/v4...v8)
+
+--- updated-dependencies: - dependency-name: actions/download-artifact dependency-version: '8'
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump astral-sh/setup-uv from 5 to 7
+  ([#15](https://github.com/bmartel/django-lightning/pull/15),
+  [`6c51d08`](https://github.com/bmartel/django-lightning/commit/6c51d08efde1d5775579b8338e23c6388b8ae925))
+
+Bumps [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) from 5 to 7. - [Release
+  notes](https://github.com/astral-sh/setup-uv/releases) -
+  [Commits](https://github.com/astral-sh/setup-uv/compare/v5...v7)
+
+--- updated-dependencies: - dependency-name: astral-sh/setup-uv dependency-version: '7'
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump the cargo group across 1 directory with 1 update
+  ([#14](https://github.com/bmartel/django-lightning/pull/14),
+  [`898c7ab`](https://github.com/bmartel/django-lightning/commit/898c7abc4b08826530415901548000acc58003b4))
+
+* chore(deps): bump the cargo group across 1 directory with 1 update
+
+Bumps the cargo group with 1 update in the /rust_core directory:
+  [pyo3](https://github.com/pyo3/pyo3).
+
+Updates `pyo3` from 0.22.6 to 0.29.0 - [Release notes](https://github.com/pyo3/pyo3/releases) -
+  [Changelog](https://github.com/PyO3/pyo3/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/pyo3/pyo3/compare/v0.22.6...v0.29.0)
+
+--- updated-dependencies: - dependency-name: pyo3 dependency-version: 0.29.0
+
+dependency-type: direct:production ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+* fix(rust_core): adapt PyO3 0.29 API changes and update dependabot automerge workflow
+
+---------
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+Co-authored-by: bmartel <brandonmartel@gmail.com>
+
+- **deps**: Update django-bolt requirement from >=0.7.0 to >=0.9.1
+  ([#22](https://github.com/bmartel/django-lightning/pull/22),
+  [`a9e86c5`](https://github.com/bmartel/django-lightning/commit/a9e86c5140efd69a8fd0ea697b072a2e0377faa2))
+
+Updates the requirements on [django-bolt](https://github.com/dj-bolt/django-bolt) to permit the
+  latest version. - [Release notes](https://github.com/dj-bolt/django-bolt/releases) -
+  [Changelog](https://github.com/dj-bolt/django-bolt/blob/master/CHANGELOG.md) -
+  [Commits](https://github.com/dj-bolt/django-bolt/compare/v0.7.0...v0.9.1)
+
+--- updated-dependencies: - dependency-name: django-bolt dependency-version: 0.9.1
+
+dependency-type: direct:production ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Update django-cors-headers requirement
+  ([#29](https://github.com/bmartel/django-lightning/pull/29),
+  [`e830475`](https://github.com/bmartel/django-lightning/commit/e830475438e8e8968ffe3e3064c160a4899c58af))
+
+Updates the requirements on [django-cors-headers](https://github.com/adamchainz/django-cors-headers)
+  to permit the latest version. -
+  [Changelog](https://github.com/adamchainz/django-cors-headers/blob/main/CHANGELOG.rst) -
+  [Commits](https://github.com/adamchainz/django-cors-headers/compare/4.4.0...4.9.0)
+
+--- updated-dependencies: - dependency-name: django-cors-headers dependency-version: 4.9.0
+
+dependency-type: direct:production ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Update msgspec requirement from >=0.18.0 to >=0.21.1
+  ([#23](https://github.com/bmartel/django-lightning/pull/23),
+  [`994aa00`](https://github.com/bmartel/django-lightning/commit/994aa0072253c429fe672553eeadbb1b9c035f41))
+
+Updates the requirements on [msgspec](https://github.com/jcrist/msgspec) to permit the latest
+  version. - [Release notes](https://github.com/jcrist/msgspec/releases) -
+  [Changelog](https://github.com/msgspec/msgspec/blob/main/docs/changelog.md) -
+  [Commits](https://github.com/jcrist/msgspec/compare/0.18.0...0.21.1)
+
+--- updated-dependencies: - dependency-name: msgspec dependency-version: 0.21.1
+
+dependency-type: direct:production ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Update pyjwt requirement from >=2.8.0 to >=2.13.0
+  ([#31](https://github.com/bmartel/django-lightning/pull/31),
+  [`5d1123e`](https://github.com/bmartel/django-lightning/commit/5d1123eeb2e4120d4820029865c34390df3340d2))
+
+Updates the requirements on [pyjwt](https://github.com/jpadilla/pyjwt) to permit the latest version.
+  - [Release notes](https://github.com/jpadilla/pyjwt/releases) -
+  [Changelog](https://github.com/jpadilla/pyjwt/blob/master/CHANGELOG.rst) -
+  [Commits](https://github.com/jpadilla/pyjwt/compare/2.8.0...2.13.0)
+
+--- updated-dependencies: - dependency-name: pyjwt dependency-version: 2.13.0
+
+dependency-type: direct:production ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Update redis requirement from >=5.0.0 to >=8.1.0
+  ([#28](https://github.com/bmartel/django-lightning/pull/28),
+  [`028cdf9`](https://github.com/bmartel/django-lightning/commit/028cdf98baa9a326968bbd3149c6be0ab17fb00a))
+
+Updates the requirements on [redis](https://github.com/redis/redis-py) to permit the latest version.
+  - [Release notes](https://github.com/redis/redis-py/releases) -
+  [Changelog](https://github.com/redis/redis-py/blob/master/CHANGES) -
+  [Commits](https://github.com/redis/redis-py/compare/v5.0.0...v8.1.0)
+
+--- updated-dependencies: - dependency-name: redis dependency-version: 8.1.0
+
+dependency-type: direct:production ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Update sqlx requirement in /rust_core/crates/db_engine
+  ([#20](https://github.com/bmartel/django-lightning/pull/20),
+  [`8120d23`](https://github.com/bmartel/django-lightning/commit/8120d23c5278915345a01da848c4ae7d1bb24dc5))
+
+Updates the requirements on [sqlx](https://github.com/launchbadge/sqlx) to permit the latest
+  version. - [Changelog](https://github.com/transact-rs/sqlx/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/launchbadge/sqlx/compare/v0.8.0...v0.9.0)
+
+--- updated-dependencies: - dependency-name: sqlx dependency-version: 0.9.0
+
+dependency-type: direct:production ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps-dev**: Update django-stubs requirement from >=5.0.0 to >=6.0.7
+  ([#25](https://github.com/bmartel/django-lightning/pull/25),
+  [`dc6be4f`](https://github.com/bmartel/django-lightning/commit/dc6be4f3a2926332f2b5ccad1a44cd5941d0545e))
+
+Updates the requirements on [django-stubs](https://github.com/typeddjango/django-stubs) to permit
+  the latest version. - [Release notes](https://github.com/typeddjango/django-stubs/releases) -
+  [Commits](https://github.com/typeddjango/django-stubs/compare/5.0.0...6.0.7)
+
+--- updated-dependencies: - dependency-name: django-stubs dependency-version: 6.0.7
+
+dependency-type: direct:development ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps-dev**: Update maturin requirement from >=1.5.0 to >=1.14.1
+  ([#24](https://github.com/bmartel/django-lightning/pull/24),
+  [`1c6fedb`](https://github.com/bmartel/django-lightning/commit/1c6fedbecff30a8af6de906491913716cf5d8c9e))
+
+Updates the requirements on [maturin](https://github.com/pyo3/maturin) to permit the latest version.
+  - [Release notes](https://github.com/pyo3/maturin/releases) -
+  [Changelog](https://github.com/PyO3/maturin/blob/main/Changelog.md) -
+  [Commits](https://github.com/pyo3/maturin/compare/v1.5.0...v1.14.1)
+
+--- updated-dependencies: - dependency-name: maturin dependency-version: 1.14.1
+
+dependency-type: direct:development ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps-dev**: Update mypy requirement from >=1.10.0 to >=2.3.0
+  ([#30](https://github.com/bmartel/django-lightning/pull/30),
+  [`c417bd4`](https://github.com/bmartel/django-lightning/commit/c417bd40ea2b5354a89c97b4a76537c57fcabaef))
+
+Updates the requirements on [mypy](https://github.com/python/mypy) to permit the latest version. -
+  [Changelog](https://github.com/python/mypy/blob/master/CHANGELOG.md) -
+  [Commits](https://github.com/python/mypy/compare/v1.10.0...v2.3.0)
+
+--- updated-dependencies: - dependency-name: mypy dependency-version: 2.3.0
+
+dependency-type: direct:development ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps-dev**: Update pytest requirement from >=8.0.0 to >=9.1.1
+  ([#27](https://github.com/bmartel/django-lightning/pull/27),
+  [`c2218a4`](https://github.com/bmartel/django-lightning/commit/c2218a466b0ccd213f904c89214ab3a69c25e350))
+
+Updates the requirements on [pytest](https://github.com/pytest-dev/pytest) to permit the latest
+  version. - [Release notes](https://github.com/pytest-dev/pytest/releases) -
+  [Changelog](https://github.com/pytest-dev/pytest/blob/main/CHANGELOG.rst) -
+  [Commits](https://github.com/pytest-dev/pytest/compare/8.0.0...9.1.1)
+
+--- updated-dependencies: - dependency-name: pytest dependency-version: 9.1.1
+
+dependency-type: direct:development ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps-dev**: Update ruff requirement from >=0.5.0 to >=0.16.0
+  ([#21](https://github.com/bmartel/django-lightning/pull/21),
+  [`f0bbd90`](https://github.com/bmartel/django-lightning/commit/f0bbd90c795992904fdc598cf111db76e064e934))
+
+Updates the requirements on [ruff](https://github.com/astral-sh/ruff) to permit the latest version.
+  - [Release notes](https://github.com/astral-sh/ruff/releases) -
+  [Changelog](https://github.com/astral-sh/ruff/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/astral-sh/ruff/compare/0.5.0...0.16.0)
+
+--- updated-dependencies: - dependency-name: ruff dependency-version: 0.16.0
+
+dependency-type: direct:development ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps-dev**: Update setuptools requirement from >=61.0 to >=83.0.0
+  ([#26](https://github.com/bmartel/django-lightning/pull/26),
+  [`34ba706`](https://github.com/bmartel/django-lightning/commit/34ba706f40558e3d368056b1c29aa3a5ed6a599e))
+
+Updates the requirements on [setuptools](https://github.com/pypa/setuptools) to permit the latest
+  version. - [Release notes](https://github.com/pypa/setuptools/releases) -
+  [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst) -
+  [Commits](https://github.com/pypa/setuptools/compare/v61.0.0...v83.0.0)
+
+--- updated-dependencies: - dependency-name: setuptools dependency-version: 83.0.0
+
+dependency-type: direct:development ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+
 ## v0.18.1 (2026-07-30)
 
 ### Bug Fixes
