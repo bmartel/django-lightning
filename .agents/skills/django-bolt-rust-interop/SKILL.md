@@ -1,6 +1,6 @@
 ---
 name: django-bolt-rust-interop
-description: Comprehensive guide on writing, managing, compiling, and running native PyO3 Rust extension modules with GIL releasing (py.allow_threads), Rayon parallel processing, Python fallback layer, optional scaffolding, and Docker multi-stage packaging in django-lightning.
+description: Comprehensive guide on writing, managing, compiling, and running native PyO3 Rust extension modules with GIL releasing (py.detach), Rayon parallel processing, Python fallback layer, optional scaffolding, and Docker multi-stage packaging in django-lightning.
 compatibility: Agentic coding assistants extending django-lightning applications with native Rust acceleration.
 metadata:
   category: rust-interop
@@ -50,7 +50,7 @@ When creating new native Rust capabilities, agents MUST:
 4. Declare the domain crate dependency in `rust_core/crates/rust_core_pyo3/Cargo.toml` and bind functions inside `rust_core/crates/rust_core_pyo3/src/lib.rs`.
 
 ### Step 1: Define `#[pyfunction]` with GIL Releasing
-Always wrap CPU-bound operations in `py.allow_threads(|| { ... })`. Releasing the GIL guarantees that Rust's multithreaded parallel loops (`rayon`) execute across all CPU cores without blocking `django-bolt`'s async event loop or `SAQ` worker process.
+Always wrap CPU-bound operations in `py.detach(|| { ... })`. Releasing the GIL guarantees that Rust's multithreaded parallel loops (`rayon`) execute across all CPU cores without blocking `django-bolt`'s async event loop or `SAQ` worker process.
 
 ```rust
 use pyo3::prelude::*;
@@ -65,7 +65,7 @@ fn process_dataset_batch(py: Python<'_>, records: Vec<String>) -> PyResult<Vec<S
     }
 
     // Release GIL: Runs across all CPU cores in parallel via Rayon
-    let results = py.allow_threads(|| {
+    let results = py.detach(|| {
         records
             .into_par_iter()
             .map(|s| s.trim().to_uppercase())
@@ -247,7 +247,7 @@ impl UserRow {
 ```
 
 ### High-Speed DB Querying in Rust (`rust_core::db`)
-Rust database query functions execute within Tokio runtime inside `py.allow_threads(|| { ... })`, releasing the GIL during database network I/O:
+Rust database query functions execute within Tokio runtime inside `py.detach(|| { ... })`, releasing the GIL during database network I/O:
 
 ```rust
 use crate::db::models::UserRow;
@@ -268,7 +268,7 @@ fn get_tokio_runtime() -> &'static tokio::runtime::Runtime {
 
 #[pyfunction]
 pub fn db_query_users_json<'py>(py: Python<'py>, db_url: String, limit: i64) -> PyResult<Bound<'py, PyBytes>> {
-    let json_bytes = py.allow_threads(|| {
+    let json_bytes = py.detach(|| {
         let rt = get_tokio_runtime();
         rt.block_on(async {
             use sqlx::sqlite::SqlitePoolOptions;
@@ -281,7 +281,7 @@ pub fn db_query_users_json<'py>(py: Python<'py>, db_url: String, limit: i64) -> 
         })
     }).map_err(pyo3::exceptions::PyValueError::new_err)?;
 
-    Ok(PyBytes::new_bound(py, &json_bytes))
+    Ok(PyBytes::new(py, &json_bytes))
 }
 ```
 
