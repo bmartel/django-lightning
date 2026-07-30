@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "django>=5.1.0",
-    "django-bolt>=0.7.0",
+    "django-bolt>=0.9.1",
     "bolt-mcp>=0.1.0",
     "msgspec>=0.21.1",
     "psycopg[binary]>=3.2.0",
