@@ -41,20 +41,49 @@ spec:
       labels:
         app: caddy-proxy
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - caddy-proxy
+              topologyKey: kubernetes.io/hostname
       containers:
       - name: caddy
         image: caddy:2-alpine
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         ports:
         - containerPort: 80
           name: http
         - containerPort: 443
           name: https
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
         volumeMounts:
         - name: caddy-config
           mountPath: /etc/caddy/Caddyfile
           subPath: Caddyfile
         - name: caddy-data
           mountPath: /data
+        - name: caddy-config-dir
+          mountPath: /config
+        - name: tmp-volume
+          mountPath: /tmp
       volumes:
       - name: caddy-config
         configMap:
@@ -62,6 +91,10 @@ spec:
       - name: caddy-data
         persistentVolumeClaim:
           claimName: caddy-data-pvc
+      - name: caddy-config-dir
+        emptyDir: {}
+      - name: tmp-volume
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

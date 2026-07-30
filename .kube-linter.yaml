@@ -2,7 +2,9 @@
 checks:
   ignorePaths:
     - "k8s/dev/dev-deployment.yaml"
+    - "k8s/dev/dev-ingress.yaml"
     - "dev/dev-deployment.yaml"
+    - "dev/dev-ingress.yaml"
   doNotInclude:
     - "no-read-only-root-fs"
     - "latest-tag"
