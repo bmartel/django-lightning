@@ -1,5 +1,3 @@
-import hashlib
-import hmac
 import secrets
 import time
 from typing import Any
@@ -7,14 +5,10 @@ from typing import Any
 import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password, make_password
 from django_bolt.exceptions import HTTPException
 
 User = get_user_model()
-
-
-def hash_api_key(key: str) -> str:
-    """Securely hash an API key using HMAC-SHA256 with the application secret key."""
-    return hmac.new(settings.SECRET_KEY.encode(), key.encode(), hashlib.sha256).hexdigest()
 
 
 def create_token(user) -> str:
@@ -46,12 +40,20 @@ async def get_current_user(request) -> dict[str, Any]:
     if api_key_header:
         from app.models import APIKey
 
-        key_hash = hash_api_key(api_key_header)
-        key_obj = (
-            await APIKey.objects.filter(key_hash=key_hash, is_active=True)
-            .select_related("user")
-            .afirst()
-        )
+        prefix = api_key_header[:12]
+        matching_keys = [
+            k
+            async for k in APIKey.objects.filter(prefix=prefix, is_active=True).select_related(
+                "user"
+            )
+        ]
+
+        key_obj = None
+        for k in matching_keys:
+            if check_password(api_key_header, k.key_hash):
+                key_obj = k
+                break
+
         if not key_obj:
             raise HTTPException(401, "Invalid or inactive API key")
 
@@ -79,7 +81,7 @@ async def create_api_key(user, name: str = "Default Key"):
 
     raw_secret = f"bolt_{secrets.token_urlsafe(32)}"
     prefix = raw_secret[:12]
-    key_hash = hash_api_key(raw_secret)
+    key_hash = make_password(raw_secret)
 
     key_obj = await APIKey.objects.acreate(
         user=user,
@@ -88,4 +90,5 @@ async def create_api_key(user, name: str = "Default Key"):
         key_hash=key_hash,
     )
     return key_obj, raw_secret
+
 
