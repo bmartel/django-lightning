@@ -57,6 +57,12 @@ Welcome agent. This repository is **django-lightning**, a high-performance start
 - **WebSockets & SSE**: Use `@api.get(...)` returning `StreamingResponse` for SSE, or `@api.websocket(...)` for WebSockets.
 - **bolt-mcp**: MCP server tools, resources, and prompts are mounted at `/mcp` using `api.mount_mcp(mcp)` via the `bolt-mcp` package.
 
+### 7. Reverse Proxy Engine & Automated Let's Encrypt SSL
+- **Docker Compose**: Use **Caddy 2** as the default reverse proxy engine (`Caddyfile` for dev, `Caddyfile.prod` for prod).
+  - Dev mode: Proxies HTTP on port 80 to `web:8000`.
+  - Prod mode: Auto-manages Let's Encrypt / ZeroSSL TLS certs for `{$DOMAIN}` on ports 80/443 with persistent ACME volumes (`caddy_data`, `caddy_config`), security headers, and unbuffered streaming (`flush_interval -1`). Backend `web:8000` is shielded from direct public host access.
+- **Kubernetes**: Use **Cert-Manager** + `ClusterIssuer` (`letsencrypt-prod`) with `k8s/ingress.yaml`, or deploy the standalone **Caddy Gateway** (`k8s/caddy-ingress.yaml`). In dev (`k8s/dev`), use `dev-ingress.yaml` on HTTP port 80.
+
 ### 8. Modular Cargo Workspace Architecture for Rust Extensions (`rust_core`)
 - **Pattern 3 Cargo Workspace Default**: `rust_core` MUST be structured as a Cargo Workspace (`rust_core/Cargo.toml`).
 - **Domain Crate Isolation**: Do not put business logic into a single monolithic file. All Rust features MUST be developed in isolated domain crates under `rust_core/crates/<domain_crate>` (e.g. `crates/db_engine`, `crates/core_utils`, `crates/analytics`).

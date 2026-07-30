@@ -4,7 +4,7 @@ description: Building multi-stage Docker images and local docker-compose environ
 compatibility: Agentic coding assistants building web applications with django-bolt.
 metadata:
   category: devops
-  tags: [docker, docker-compose, containerization, django-bolt, uv]
+  tags: [docker, docker-compose, containerization, django-bolt, uv, caddy, letsencrypt, ssl]
 ---
 
 # Django-Bolt Docker & Containerization
@@ -14,6 +14,7 @@ metadata:
 - **Native Server Execution**: The container `CMD` MUST execute `python manage.py runbolt --host 0.0.0.0 --port 8000 --processes 4`. Do NOT run `uvicorn` or `gunicorn`.
 - **Multi-Stage Build**: Use a builder stage with `uv` to compile wheels and resolve virtual environments cleanly.
 - **Non-Root Execution**: Run container processes under an unprivileged `django` system user.
+- **Reverse Proxy Standard**: Include **Caddy 2** for automated Let's Encrypt / ZeroSSL TLS certificates, HTTP/2 + HTTP/3 support, HTTP -> HTTPS redirects, and unbuffered SSE/WebSocket proxying (`flush_interval -1`).
 
 ## Production `Dockerfile` Pattern
 
@@ -39,35 +40,62 @@ HEALTHCHECK --interval=10s --timeout=3s CMD curl -f http://localhost:8000/health
 CMD ["python", "manage.py", "runbolt", "--host", "0.0.0.0", "--port", "8000", "--processes", "4"]
 ```
 
-## `docker-compose.yml` Architecture
+## Production Docker Compose Architecture with Caddy & Let's Encrypt
 
 ```yaml
 version: "3.8"
 services:
   web:
-    build: .
-    command: python manage.py runbolt --host 0.0.0.0 --port 8000 --dev
-    ports: ["8000:8000"]
+    build:
+      context: .
+      target: runner
+    command: python manage.py runbolt --host 0.0.0.0 --port 8000 --processes 4
     environment:
-      - DATABASE_URL=postgres://lightning:lightningpass@db:5432/lightningdb
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_healthy }
+    restart: always
+
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL:-admin@example.com}
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
 
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: lightning
-      POSTGRES_PASSWORD: lightningpass
-      POSTGRES_DB: lightningdb
+      POSTGRES_USER: ${POSTGRES_USER:-lightning}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lightningpass}
+      POSTGRES_DB: ${POSTGRES_DB:-lightningdb}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lightning -d lightningdb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lightning} -d ${POSTGRES_DB:-lightningdb}"]
 
   redis:
     image: redis:7-alpine
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+```
 
 ## Migration Service Pattern
 
@@ -83,5 +111,3 @@ To run database migrations cleanly prior to launching services in Docker Compose
         condition: service_healthy
 ```
 Run pre-start migrations with `docker compose run --rm migrate` or `docker compose up --build`.
-
-```

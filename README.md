@@ -252,21 +252,44 @@ just format
 
 ## Deployment & Container Orchestration
 
-### Local Docker Stack
+### Local Docker Stack (Development Reverse Proxy)
 
-Start PostgreSQL, Redis, and Django-Bolt with local build volume caching:
+Start PostgreSQL, Redis, Django-Bolt, and Caddy reverse proxy locally on port 80:
 
 ```bash
 docker compose up --build
 ```
 
-### Kubernetes
+### Production Docker Stack (Automated Let's Encrypt SSL)
 
-Apply Kubernetes manifests:
+Spin up production containers with **Caddy 2** handling automatic Let's Encrypt TLS certificate provisioning, HTTP -> HTTPS redirection, and security hardening headers:
 
 ```bash
-kubectl apply -f k8s/
+# Production stack using domain and email for Let's Encrypt ACME registration
+DOMAIN=api.example.com LETSENCRYPT_EMAIL=admin@example.com docker compose -f docker-compose.prod.yml up --build -d
+
+# Or via just shortcut:
+just docker-prod domain="api.example.com" email="admin@example.com"
 ```
+
+### Kubernetes (Production SSL via Cert-Manager or Caddy)
+
+1. **Standard Ingress with Cert-Manager (Let's Encrypt)**:
+   ```bash
+   kubectl apply -f k8s/cert-manager-issuer.yaml
+   kubectl apply -f k8s/
+   ```
+
+2. **Standalone Caddy Gateway Ingress**:
+   ```bash
+   kubectl apply -f k8s/caddy-ingress.yaml
+   kubectl apply -f k8s/
+   ```
+
+3. **Local Development Cluster**:
+   ```bash
+   kubectl apply -k k8s/dev
+   ```
 
 ### Fly.io
 

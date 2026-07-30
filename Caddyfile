@@ -1,0 +1,30 @@
+# Development Caddyfile for django-lightning
+# Reverse proxies HTTP traffic on port 80 to the Django-Bolt app service (web:8000)
+
+{
+	# Disable global HTTPS in local development
+	auto_https off
+	admin off
+}
+
+:80 {
+	# High-efficiency compression for web assets and JSON payloads
+	encode zstd gzip
+
+	# Reverse proxy to django-bolt container
+	reverse_proxy web:8000 {
+		# Enable instant unbuffered streaming for WebSockets & Server-Sent Events (SSE)
+		flush_interval -1
+
+		# Pass real client IP and host header upstream
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	# Health check endpoint directly on reverse proxy
+	handle /proxy-health {
+		respond "OK" 200
+	}
+}

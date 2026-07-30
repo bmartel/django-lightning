@@ -94,9 +94,9 @@ format:
 docker-dev:
     docker compose up --build
 
-# Start production stack locally with docker-compose.prod.yml
-docker-prod:
-    docker compose -f docker-compose.prod.yml up --build
+# Start production stack locally with docker-compose.prod.yml (domain & ssl options)
+docker-prod domain="localhost" email="admin@example.com":
+    DOMAIN={{domain}} LETSENCRYPT_EMAIL={{email}} docker compose -f docker-compose.prod.yml up --build
 
 # Stop local docker services
 docker-down:
@@ -114,8 +114,14 @@ docker-build-dev:
 deploy-fly:
     fly deploy
 
-# Apply production Kubernetes manifests
+# Apply production Kubernetes manifests (standard ingress + cert-manager)
 k8s-apply:
+    kubectl apply -f k8s/cert-manager-issuer.yaml
+    kubectl apply -f k8s/
+
+# Apply production Kubernetes manifests with standalone Caddy gateway proxy
+k8s-apply-caddy:
+    kubectl apply -f k8s/caddy-ingress.yaml
     kubectl apply -f k8s/
 
 # Apply local development Kubernetes manifests

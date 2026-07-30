@@ -1,0 +1,46 @@
+# Production Caddyfile for django-lightning
+# Automatic HTTPS via Let's Encrypt / ZeroSSL with security hardening and real-time streaming support
+
+{
+	# Email for Let's Encrypt / ZeroSSL expiry notifications
+	email {$LETSENCRYPT_EMAIL:admin@example.com}
+	
+	# HTTP/3 (QUIC) and HTTP/2 enabled by default
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$DOMAIN:localhost} {
+	# Automatic HTTP -> HTTPS redirect enabled by default in Caddy
+
+	# Security Headers Hardening
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Compression for maximum performance
+	encode zstd gzip
+
+	# High-performance reverse proxy to django-bolt container
+	reverse_proxy web:8000 {
+		# Enable instant unbuffered streaming for WebSockets & Server-Sent Events (SSE)
+		flush_interval -1
+
+		# Real IP and host headers
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	# Reverse proxy health check endpoint
+	handle /proxy-health {
+		respond "OK" 200
+	}
+}
