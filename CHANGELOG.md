@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.18.3 (2026-07-30)
+
+### Bug Fixes
+
+- **security**: Use Django password hasher make_password/check_password for APIKey
+  ([`4fbb357`](https://github.com/bmartel/django-lightning/commit/4fbb3579178667ee83ec87fd23a4fef7b169ce2e))
+
+
 ## v0.18.2 (2026-07-30)
 
 ### Bug Fixes
