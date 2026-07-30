@@ -12,7 +12,7 @@ dependencies = [
     "psycopg[binary]>=3.2.0",
     "dj-database-url>=3.1.2",
     "django-cors-headers>=4.9.0",
-    "pyjwt>=2.8.0",
+    "pyjwt>=2.13.0",
     "redis>=8.1.0",
     "saq>=0.26.4",
 ]
