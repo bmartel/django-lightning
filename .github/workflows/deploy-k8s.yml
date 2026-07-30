@@ -12,6 +12,9 @@ on:
       - 'k8s/**'
       - '.kube-linter.yaml'
 
+permissions:
+  contents: read
+
 jobs:
   validate-k8s:
     name: Validate Kubernetes Manifests
