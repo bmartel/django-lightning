@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v0.18.0 (2026-07-30)
+
+### Features
+
+- **infra**: Add Caddy reverse proxy and Let's Encrypt automated SSL for Docker Compose and
+  Kubernetes
+  ([`09f896e`](https://github.com/bmartel/django-lightning/commit/09f896eff184587000090167816382a1ec53a246))
+
+
 ## v0.17.0 (2026-07-29)
 
 ### Documentation
