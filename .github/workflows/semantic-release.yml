@@ -32,6 +32,6 @@ jobs:
           git rebase origin/main
 
       - name: Python Semantic Release
-        uses: python-semantic-release/python-semantic-release@v9.18.1
+        uses: python-semantic-release/python-semantic-release@v10.6.1
         with:
           github_token: ${{ secrets.ADMIN_PAT }}
