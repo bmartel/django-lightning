@@ -33,8 +33,8 @@ async def benchmark_rust_vs_python():
     t3 = time.perf_counter()
     rust_time_ms = (t3 - t2) * 1000.0
 
-    print(f"Python 100k Iterations Time : {py_time_ms:.3f} ms")
-    print(f"Rust FFI Call Duration      : {rust_time_ms:.3f} ms")
+    print(f"Python 100k Iterations Result : {py_res} ({py_time_ms:.3f} ms)")
+    print(f"Rust Core Version Result      : {rust_res} ({rust_time_ms:.3f} ms)")
     print("----------------------------------------------\n")
 
 

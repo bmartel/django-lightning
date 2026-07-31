@@ -27,6 +27,7 @@ metadata:
 from django.db import models
 from app.fields import UUID7Field
 
+
 class Organization(models.Model):
     id = UUID7Field(primary_key=True)
     name = models.CharField(max_length=255)

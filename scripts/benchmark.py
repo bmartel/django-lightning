@@ -28,7 +28,7 @@ def raw_worker_process(
         f"User-Agent: lightning-bench/1.0\r\n"
         f"Accept: */*\r\n"
         f"Connection: keep-alive\r\n\r\n"
-    ).encode("utf-8")
+    ).encode()
 
     async def run_async_worker():
         reqs_per_conn = num_requests // concurrency
