@@ -44,6 +44,8 @@ uv run python scripts/benchmark.py --host 127.0.0.1 --port 8000 --path /health -
 - **High-Speed Serialization**: Powered by `msgspec.Struct` (10–20x faster than Pydantic) and custom `django_bolt` serializers.
 - **Managed Exclusively with `uv`**: Ultra-fast environment setup, package locking, script execution, linting, formatting, and test runner execution via `uv`.
 - **Resource CLI Scaffolding**: Generate models, serializers, async handlers, and tests in seconds using `uv run manage.py generate_resource <ModelName> --fields "..."`.
+- **Standard Django App Conventions**: Create domain apps using standard `uv run manage.py startapp <app_name>`. All models (`models.py`), migrations (`migrations/`), admin classes (`admin.py`), and AppConfigs (`apps.py`) work natively out of the box.
+- **Strictly Minimal Foundation**: Zero placeholder domain entities (no dummy `article` or `product` cruft). Only production-essential functional building blocks exist (Auth, Tenancy, Health, Realtime/MCP infra).
 - **Containerization & Cloud Infrastructure**: Production multi-stage `Dockerfile`, multi-service `docker-compose.yml`, Kubernetes manifests (`k8s/`), and Fly.io deployment setup (`fly.toml`).
 
 ---

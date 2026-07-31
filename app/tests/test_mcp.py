@@ -78,3 +78,14 @@ async def test_mcp_tools_direct_invocation():
     res = await metrics_fn()
     assert "total_requests" in res
     assert "compliance_rate_pct" in res
+
+
+def test_mcp_disabled_in_production(settings):
+    from django_bolt import BoltAPI
+
+    from app.routes.mcp_server import setup_mcp_server
+
+    settings.ENABLE_MCP_SERVER = False
+    test_api = BoltAPI()
+    result = setup_mcp_server(test_api)
+    assert result is None

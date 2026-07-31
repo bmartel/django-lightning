@@ -50,12 +50,13 @@ Welcome agent. This repository is **django-lightning**, a high-performance start
 
 ### 5. Data Validation & Schemas
 - **Use `msgspec.Struct` for request/response payloads**: It is up to 10-20x faster than Pydantic.
+- **Type-Safe Environment Settings (`app.config.EnvSettings`)**: All environment variables are parsed, coerced, and validated using a high-performance `msgspec.Struct` engine in `app/config.py` (`EnvSettings.load_from_env(base_dir=BASE_DIR)`). Avoid raw string `os.environ.get()` calls in settings.
 - **Use `django_bolt.serializers.Serializer`** when you need custom field validators (`@field_validator`) or model-level cross-field checks (`@model_validator`).
 - **Use parameter annotations**: Annotate inputs with `Query`, `Path`, `Header`, `Cookie`, `Form`, `File`, `Body`, or `Depends` from `django_bolt.param_functions`.
 
 ### 6. Realtime & Model Context Protocol (MCP)
 - **WebSockets & SSE**: Use `@api.get(...)` returning `StreamingResponse` for SSE, or `@api.websocket(...)` for WebSockets.
-- **bolt-mcp**: MCP server tools, resources, and prompts are mounted at `/mcp` using `api.mount_mcp(mcp)` via the `bolt-mcp` package.
+- **bolt-mcp Production Guard**: MCP tools (`inspect_db_schema`, `run_query_explain`, `enqueue_saq_job`) are strictly for local AI-assisted development. The `/mcp` endpoint is strictly gated by `ENABLE_MCP_SERVER = DEBUG and ...` and MUST NEVER be registered in production (`DEBUG = False`).
 
 ### 7. Reverse Proxy Engine & Automated Let's Encrypt SSL
 - **Docker Compose**: Use **Caddy 2** as the default reverse proxy engine (`Caddyfile` for dev, `Caddyfile.prod` for prod).
@@ -69,6 +70,12 @@ Welcome agent. This repository is **django-lightning**, a high-performance start
 - **PyO3 FFI Binding Crate**: Maturin builds `rust_core/crates/rust_core_pyo3/Cargo.toml` as the `cdylib` Python module, delegating calls to workspace crates.
 - **Model Codegen**: Run `uv run manage.py generate_rust_models` to update Django struct definitions in `rust_core/crates/db_engine/src/models.rs`.
 - **Workspace Testing**: Run `cargo test --manifest-path rust_core/Cargo.toml` to execute unit tests across all workspace crates simultaneously.
+
+### 9. Django App Conventions & Minimal Starter Principles
+- **Standard Django Apps (`startapp`)**: Standard Django app generation commands (`uv run manage.py startapp <app_name>`) and structure (`apps.py`, `models.py`, `admin.py`, `migrations/`) work natively. Always register new apps in `INSTALLED_APPS` in `config/settings.py`.
+- **Zero Cruft Principle**: This starter template is strictly minimal. Do NOT introduce dummy example domain entities (e.g. `article`, `product_demo`, `blog`). Only maintain functional core building blocks (Authentication, Authorization, Multi-Tenancy, System Health, Realtime/MCP infra).
+- **Clean Route Mounting**: Mount high-performance async API route modules in `app/api.py` (e.g. `register_<app>_routes(api)`).
+- **Automated Tooling Compatibility**: `uv run manage.py generate_rust_models` and MCP `inspect_db_schema` automatically discover and process models across all installed Django apps without manual configuration.
 
 
 ---

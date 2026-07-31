@@ -122,4 +122,25 @@ async def create_session():
 @api.get("/old-url")
 async def old_url():
     return Redirect("/new-url", status_code=301)
+
+
+## Standard Django App Route Mounting
+
+To integrate high-performance `django-bolt` async handlers with standard Django apps (`startapp`):
+
+1. Define app route functions in `<app_name>/routes.py` (or `<app_name>/api.py`):
+```python
+from django_bolt import BoltAPI
+
+def register_my_app_routes(api: BoltAPI):
+    @api.get("/api/my-resource")
+    async def list_items():
+        return []
+```
+2. Mount the app routes in the project API entrypoint (`app/api.py`):
+```python
+from my_app.routes import register_my_app_routes
+
+register_my_app_routes(api)
+```
 ```

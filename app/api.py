@@ -1,3 +1,4 @@
+from django.conf import settings
 from django_bolt import (
     BoltAPI,
     CompressionConfig,
@@ -8,7 +9,6 @@ from django_bolt import (
 )
 
 from app.middleware import LatencyBudgetMiddleware
-from app.routes.article import register_article_routes
 from app.routes.auth import register_auth_routes
 from app.routes.health import register_health_routes
 from app.routes.mcp_server import setup_mcp_server
@@ -36,7 +36,7 @@ api = BoltAPI(
         ),
         path="/docs",
         render_plugins=[ScalarRenderPlugin()],
-        enabled=True,
+        enabled=getattr(settings, "DEBUG", False),
     ),
 )
 
@@ -45,8 +45,8 @@ register_health_routes(api)
 register_auth_routes(api)
 register_tenant_routes(api)
 register_realtime_routes(api)
-register_article_routes(api)
 
 
-# Mount MCP (Model Context Protocol) Server at /mcp
-setup_mcp_server(api)
+# Mount MCP (Model Context Protocol) Server at /mcp ONLY in development (DEBUG=True)
+if getattr(settings, "ENABLE_MCP_SERVER", False):
+    setup_mcp_server(api)

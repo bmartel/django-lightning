@@ -2,6 +2,7 @@ from typing import Any
 
 from bolt_mcp import MCP
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from app.middleware import LATENCY_TRACKER
@@ -13,6 +14,9 @@ User = get_user_model()
 
 
 def setup_mcp_server(api):
+    if not getattr(settings, "ENABLE_MCP_SERVER", False):
+        return None
+
     mcp = MCP("django-lightning-mcp", "1.0.0")
 
     @mcp.tool(

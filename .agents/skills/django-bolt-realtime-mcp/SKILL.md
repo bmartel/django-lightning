@@ -60,3 +60,9 @@ async def summarize(topic: str) -> str:
 
 api.mount_mcp(mcp)  # Mounts Streamable HTTP MCP server at /mcp
 ```
+
+## Production Environment Guard
+
+The builtin MCP server (`bolt-mcp`) provides AI developer debugging tools (`inspect_db_schema`, `run_query_explain`, `enqueue_saq_job`).
+**CRITICAL SECURITY REQUIREMENT**: The MCP server is strictly enabled ONLY when `ENABLE_MCP_SERVER = DEBUG and ...` is `True`. In any non-development / production environment (`DEBUG = False`), `ENABLE_MCP_SERVER` is `False` and `/mcp` is NEVER registered onto the API server.
+

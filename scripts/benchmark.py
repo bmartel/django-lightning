@@ -18,26 +18,26 @@ async def send_request(reader, writer, path, host="127.0.0.1"):
         f"Connection: keep-alive\r\n\r\n"
     )
     start = time.perf_counter()
-    writer.write(req.encode('utf-8'))
+    writer.write(req.encode("utf-8"))
     await writer.drain()
-    
+
     # Read response status header
     line = await reader.readline()
     status_code = 200
     if line:
-        parts = line.decode('utf-8', errors='ignore').split(' ')
+        parts = line.decode("utf-8", errors="ignore").split(" ")
         if len(parts) > 1:
             try:
                 status_code = int(parts[1])
             except ValueError:
                 pass
-                
+
     content_length = 0
     while True:
         header = await reader.readline()
         if not header or header == b"\r\n":
             break
-        header_str = header.decode('utf-8', errors='ignore').lower()
+        header_str = header.decode("utf-8", errors="ignore").lower()
         if header_str.startswith("content-length:"):
             try:
                 content_length = int(header_str.split(":")[1].strip())
@@ -49,6 +49,7 @@ async def send_request(reader, writer, path, host="127.0.0.1"):
 
     elapsed_ms = (time.perf_counter() - start) * 1000.0
     return elapsed_ms, status_code
+
 
 async def worker(host, port, path, num_requests, results, status_counts):
     try:
@@ -79,18 +80,19 @@ async def worker(host, port, path, num_requests, results, status_counts):
     except Exception:
         pass
 
+
 async def run_benchmark(host, port, path, total_requests, concurrency):
     reqs_per_worker = total_requests // concurrency
     results = []
     status_counts = {}
-    
+
     print("--- Starting Benchmark ---")
     print(f"Target: http://{host}:{port}{path}")
     print(
         f"Requests: {total_requests} across {concurrency} "
         f"concurrent connections ({reqs_per_worker} reqs/conn)"
     )
-    
+
     start_time = time.perf_counter()
     tasks = [
         worker(host, port, path, reqs_per_worker, results, status_counts)
@@ -98,7 +100,7 @@ async def run_benchmark(host, port, path, total_requests, concurrency):
     ]
     await asyncio.gather(*tasks)
     total_time = time.perf_counter() - start_time
-    
+
     if not results:
         print("No successful requests recorded.")
         return
@@ -120,6 +122,7 @@ async def run_benchmark(host, port, path, total_requests, concurrency):
     print(f"Latency p99              : {p99:.2f} ms")
     print(f"HTTP Status Counts       : {status_counts}")
     print("--------------------------\n")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="django-lightning benchmark script")

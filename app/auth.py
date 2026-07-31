@@ -90,5 +90,3 @@ async def create_api_key(user, name: str = "Default Key"):
         key_hash=key_hash,
     )
     return key_obj, raw_secret
-
-

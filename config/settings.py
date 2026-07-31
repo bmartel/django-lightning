@@ -2,23 +2,21 @@
 Django settings for django-lightning project using django-bolt.
 """
 
-import os
 from pathlib import Path
 
 import dj_database_url
 
+from app.config import EnvSettings
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get(
-    "SECRET_KEY",
-    "django-insecure-change-this-secret-key-in-production-1234567890!",
-)
+# Load type-safe environment configuration powered by msgspec.Struct
+env = EnvSettings.load_from_env(base_dir=BASE_DIR)
 
-DEBUG = os.environ.get("DEBUG", "1").lower() in ("1", "true", "yes", "on")
-
-ALLOWED_HOSTS = [
-    host.strip() for host in os.environ.get("ALLOWED_HOSTS", "*").split(",") if host.strip()
-]
+SECRET_KEY = env.SECRET_KEY
+DEBUG = env.DEBUG
+ENABLE_MCP_SERVER = env.ENABLE_MCP_SERVER
+ALLOWED_HOSTS = env.ALLOWED_HOSTS
 
 # Application definition
 INSTALLED_APPS = [
@@ -30,7 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "django_bolt",
-    "app",
+    "app.apps.CoreConfig",
 ]
 
 MIDDLEWARE = [
@@ -69,11 +67,7 @@ ASGI_APPLICATION = "config.asgi.application"
 AUTH_USER_MODEL = "app.User"
 
 # Database configuration
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-)
-
+DATABASE_URL = env.DATABASE_URL
 DATABASES = {
     "default": dj_database_url.parse(
         DATABASE_URL,
@@ -83,8 +77,8 @@ DATABASES = {
 }
 
 # Cache & Redis configuration
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-USE_REDIS_CACHE = os.environ.get("USE_REDIS_CACHE", "0").lower() in ("1", "true", "yes", "on")
+REDIS_URL = env.REDIS_URL
+USE_REDIS_CACHE = bool(env.USE_REDIS_CACHE and env.REDIS_URL)
 
 if USE_REDIS_CACHE:
     CACHES = {
@@ -100,7 +94,6 @@ else:
             "LOCATION": "django-lightning-cache",
         }
     }
-
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -125,11 +118,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS setup
 CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
-    if origin.strip()
-]
+CORS_ALLOWED_ORIGINS = env.CORS_ALLOWED_ORIGINS
 
 # Logging configuration
 LOGGING = {

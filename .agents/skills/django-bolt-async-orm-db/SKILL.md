@@ -15,6 +15,23 @@ metadata:
 1. **Django Async ORM (`app/models.py`)**: Standard, primary database interface for REST APIs, CRUD, Auth, Admin, and business logic.
 2. **High-Performance Rust DB Engine (`rust_core::db` + `sqlx`)**: Optional high-throughput query engine for sub-millisecond API endpoints (>50k RPS), vector searches, bulk transformations, and streaming aggregations. Synchronized with Django models via `just rust-codegen` (`generate_rust_models`).
 
+## ⚡ Native Time-Ordered UUIDv7 Primary Keys (`UUID7Field`)
+
+`django-lightning` provides native time-ordered 128-bit **UUIDv7** primary key support in `app.fields.UUID7Field`:
+
+- **B-Tree Index Friendly**: Unlike random UUIDv4 (which causes severe B-Tree index fragmentation and cache misses on insertion), UUIDv7 embeds a 48-bit millisecond timestamp at the beginning of the UUID bytes. New records append sequentially to the rightmost index page in PostgreSQL (identical B-Tree locality to `BigAutoField`).
+- **PostgreSQL 128-Bit Native Storage**: Stored in PostgreSQL's native 16-byte `uuid` column type.
+- **Python 3.13+ & Rust Native Speed**: Generates time-ordered UUIDv7 via standard library `uuid.uuid7()` or PyO3 Rust extension fallback (`gen_uuid7()`).
+
+```python
+from django.db import models
+from app.fields import UUID7Field
+
+class Organization(models.Model):
+    id = UUID7Field(primary_key=True)
+    name = models.CharField(max_length=255)
+```
+
 ---
 
 ## Mandatory Async ORM Patterns
@@ -357,3 +374,25 @@ class Migration(migrations.Migration):
 
 - `sync=False` (default): Registers the async migration in `PENDING` state for SAQ worker execution post-rollout without holding up container startup.
 - `sync=True`: Executes the async migration inline during `uv run manage.py migrate`.
+
+---
+
+## Standard Django App Creation & Model Codegen
+
+### 1. Generating & Registering New Apps
+Create domain apps using standard Django conventions:
+```bash
+uv run manage.py startapp <app_name>
+```
+Register the app in `INSTALLED_APPS` inside `config/settings.py`:
+```python
+INSTALLED_APPS = [
+    ...,
+    "<app_name>.apps.<AppConfigClassName>",
+]
+```
+
+### 2. Automatic Tooling & Rust Codegen Introspection
+- **Migrations**: `uv run manage.py makemigrations` and `uv run manage.py migrate` manage models across all installed apps.
+- **Rust Struct Codegen**: Run `uv run manage.py generate_rust_models` to update PyO3/Rust struct definitions for models in all installed Django apps.
+- **MCP Database Introspection**: The `inspect_db_schema` MCP tool automatically introspects models from all installed apps without manual configuration.

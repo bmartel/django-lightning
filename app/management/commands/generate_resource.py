@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "resource_name", help="Resource name in PascalCase (e.g. Product, Article)"
+            "resource_name", help="Resource name in PascalCase (e.g. Product, Project)"
         )
         parser.add_argument(
             "--fields",
