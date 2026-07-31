@@ -6,6 +6,8 @@ Provides time-ordered, B-Tree index-friendly 128-bit UUIDv7 primary keys nativel
 
 from __future__ import annotations
 
+import os
+import time
 import uuid
 from typing import Any
 
@@ -13,7 +15,10 @@ from django.db import models
 
 
 def gen_uuid7() -> uuid.UUID:
-    """Generate time-ordered UUIDv7 (standard library in Python 3.13+ or PyO3 Rust extension)."""
+    """
+    Generate time-ordered UUIDv7
+    (standard library in Python 3.13+, Rust extension, or pure Python RFC 9562).
+    """
     if hasattr(uuid, "uuid7"):
         return uuid.uuid7()
 
@@ -28,12 +33,13 @@ def gen_uuid7() -> uuid.UUID:
     except Exception:
         pass
 
-    try:
-        import uuid6
-
-        return uuid6.uuid7()
-    except ImportError:
-        return uuid.uuid4()
+    # Pure Python RFC 9562 UUIDv7 generator fallback
+    ts_ms = int(time.time() * 1000) & 0xFFFFFFFFFFFF
+    rand_a = int.from_bytes(os.urandom(2), "big") & 0x0FFF
+    rand_b = int.from_bytes(os.urandom(8), "big") & 0x3FFFFFFFFFFFFFFF
+    high = (ts_ms << 16) | (0x7 << 12) | rand_a
+    low = (0x2 << 62) | rand_b
+    return uuid.UUID(int=(high << 64) | low)
 
 
 class UUID7Field(models.UUIDField):
