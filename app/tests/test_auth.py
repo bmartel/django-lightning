@@ -3,6 +3,10 @@ from django_bolt.testing import TestClient
 
 from app.api import api
 
+# A strong password that satisfies Django's configured validators (not common, not
+# all-numeric, not similar to the username).
+STRONG_PASSWORD = "v3ry-Str0ng-Passphrase!"
+
 
 @pytest.mark.django_db
 def test_user_registration_login_and_profile_update():
@@ -14,7 +18,7 @@ def test_user_registration_login_and_profile_update():
         json={
             "username": "alex",
             "email": "alex@example.com",
-            "password": "password123",
+            "password": STRONG_PASSWORD,
             "bio": "Building fast APIs",
             "avatar_url": "https://example.com/avatar.png",
         },
@@ -27,7 +31,7 @@ def test_user_registration_login_and_profile_update():
     # Login
     login_resp = client.post(
         "/api/auth/login",
-        json={"username": "alex", "password": "password123"},
+        json={"username": "alex", "password": STRONG_PASSWORD},
     )
     assert login_resp.status_code == 200
     token = login_resp.json()["access_token"]
@@ -77,6 +81,13 @@ def test_registration_validation_rules():
     resp = client.post(
         "/api/auth/register",
         json={"username": "validuser", "email": "valid@example.com", "password": "short"},
+    )
+    assert resp.status_code in (400, 422)
+
+    # Test common/weak password is rejected by Django's password validators
+    resp = client.post(
+        "/api/auth/register",
+        json={"username": "validuser", "email": "valid@example.com", "password": "password123"},
     )
     assert resp.status_code in (400, 422)
 

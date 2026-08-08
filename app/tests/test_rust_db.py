@@ -131,6 +131,14 @@ async def test_rust_db_query_users_file_db():
         assert len(users) == 1
         assert users[0]["username"] == "file_db_rust_user"
         assert users[0]["email"] == "rust@example.com"
+        # The Rust engine must never serialize the password hash back to a caller.
+        assert "password" not in users[0]
     finally:
-        if Path(db_path).exists():
-            Path(db_path).unlink()
+        # The Rust engine caches its connection pool, so it intentionally keeps the
+        # SQLite file open for reuse. On Windows an open file cannot be unlinked, so
+        # cleanup of this throwaway test DB is best-effort.
+        try:
+            if Path(db_path).exists():
+                Path(db_path).unlink()
+        except PermissionError:
+            pass

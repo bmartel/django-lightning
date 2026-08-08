@@ -27,7 +27,13 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
-        command: ["uv", "run", "manage.py", "migrate", "--noinput"]
+          capabilities:
+            drop: ["ALL"]
+          seccompProfile:
+            type: RuntimeDefault
+        # `uv` is not present in the runtime image, and `uv run` would try to write
+        # caches onto the read-only root filesystem. Use the image's Python directly.
+        command: ["python", "manage.py", "migrate", "--noinput"]
         envFrom:
         - configMapRef:
             name: django-lightning-config

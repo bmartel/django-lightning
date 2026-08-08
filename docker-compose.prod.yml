@@ -8,9 +8,11 @@ services:
       target: runner
     command: python manage.py migrate --noinput
     environment:
+      # `${VAR:?message}` fails fast if the variable is unset/empty, so production never
+      # boots with an empty SECRET_KEY or an unconfigured database.
       - DEBUG=0
-      - SECRET_KEY=${SECRET_KEY}
-      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
     depends_on:
       db:
         condition: service_healthy
@@ -23,15 +25,17 @@ services:
     command: python manage.py runbolt --host 0.0.0.0 --port 8000 --processes 4
     environment:
       - DEBUG=0
-      - SECRET_KEY=${SECRET_KEY}
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
+      - REDIS_URL=${REDIS_URL:?REDIS_URL is required}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:?ALLOWED_HOSTS is required}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: always
 
   worker:
@@ -42,14 +46,16 @@ services:
     command: python -m saq app.tasks.settings
     environment:
       - DEBUG=0
-      - SECRET_KEY=${SECRET_KEY}
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
+      - REDIS_URL=${REDIS_URL:?REDIS_URL is required}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: always
 
   caddy:
@@ -73,7 +79,8 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-lightning}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lightningpass}
+      # No default: production must supply a real database password.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-lightningdb}
     volumes:
       - postgres_data:/var/lib/postgresql/data

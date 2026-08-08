@@ -1,4 +1,10 @@
+import asyncio
+
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django_bolt import BoltAPI, Depends
 from django_bolt.exceptions import HTTPException
 
@@ -6,6 +12,15 @@ from app.auth import create_token, get_current_user
 from app.schemas.auth import LoginIn, TokenOut, UserCreate, UserOut, UserUpdateIn
 
 User = get_user_model()
+
+
+def _verify_password(user, raw_password: str) -> bool:
+    """Verify a password, running a dummy hash for unknown users to equalize timing."""
+    if user is None:
+        # Burn comparable CPU so login timing doesn't reveal whether the user exists.
+        make_password(raw_password)
+        return False
+    return user.check_password(raw_password)
 
 
 def register_auth_routes(api: BoltAPI):
@@ -17,19 +32,27 @@ def register_auth_routes(api: BoltAPI):
         summary="Register a new user account",
     )
     async def register(data: UserCreate):
-        if await User.objects.filter(username=data.username).aexists():
-            raise HTTPException(400, "Username already exists")
-        if await User.objects.filter(email=data.email).aexists():
-            raise HTTPException(400, "Email already registered")
+        # Enforce Django's configured password validators (common-password, numeric-only,
+        # user-attribute similarity, min length) — msgspec only checked the length bound.
+        candidate = User(username=data.username, email=data.email)
+        try:
+            await asyncio.to_thread(validate_password, data.password, candidate)
+        except ValidationError as exc:
+            raise HTTPException(400, "; ".join(exc.messages))
 
-        user = await User.objects.acreate(
-            username=data.username,
-            email=data.email,
-            bio=data.bio,
-            avatar_url=data.avatar_url,
-        )
-        user.set_password(data.password)
-        await user.asave()
+        # Hash off the event loop, then create the row in a single write so a crash can't
+        # leave an account with an empty password. A unique-constraint race surfaces as 400.
+        password_hash = await asyncio.to_thread(make_password, data.password)
+        try:
+            user = await User.objects.acreate(
+                username=data.username,
+                email=data.email,
+                password=password_hash,
+                bio=data.bio,
+                avatar_url=data.avatar_url,
+            )
+        except IntegrityError:
+            raise HTTPException(400, "Username or email already registered")
 
         return {
             "id": user.id,
@@ -48,7 +71,10 @@ def register_auth_routes(api: BoltAPI):
     )
     async def login(credentials: LoginIn):
         user = await User.objects.filter(username=credentials.username).afirst()
-        if not user or not user.check_password(credentials.password):
+        # Verify the PBKDF2 hash off the event loop. Always run a check (even for an
+        # unknown user) to avoid leaking account existence via response timing.
+        valid = await asyncio.to_thread(_verify_password, user, credentials.password)
+        if not valid:
             raise HTTPException(401, "Invalid username or password")
 
         token = create_token(user)

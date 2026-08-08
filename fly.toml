@@ -7,12 +7,16 @@ primary_region = "iad"
   dockerfile = "Dockerfile"
 
 [deploy]
-  release_command = "uv run manage.py migrate --noinput"
+  # `uv` is not present in the runtime image; use the venv Python baked into the image.
+  release_command = "python manage.py migrate --noinput"
 
 
 [env]
   DJANGO_SETTINGS_MODULE = "config.settings"
   ALLOWED_HOSTS = ".fly.dev"
+  DEBUG = "0"
+  # SECRET_KEY, DATABASE_URL, REDIS_URL must be provided via `fly secrets set ...`
+  # (the app refuses to boot with DEBUG=0 and an unset/placeholder SECRET_KEY).
 
 [http_service]
   internal_port = 8000

@@ -12,6 +12,10 @@ from django.apps import apps
 from django.core.management.base import BaseCommand
 from django.db import models
 
+# Columns holding secrets/credentials are never mirrored into the Rust layer, so a
+# `SELECT`-based helper can't accidentally serialize them back to an API client.
+SENSITIVE_COLUMNS = {"password", "key_hash"}
+
 FIELD_TYPE_MAP = {
     models.AutoField: "i64",
     models.BigAutoField: "i64",
@@ -107,6 +111,8 @@ class Command(BaseCommand):
                 continue
 
             col_name = field.column
+            if col_name in SENSITIVE_COLUMNS:
+                continue
             field_names.append(col_name)
             rust_type = self._map_field_type(field)
 

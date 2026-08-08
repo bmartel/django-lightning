@@ -118,46 +118,71 @@ class BaseAsyncMigration(abc.ABC):
             logger.warning(f"Async migration '{self.name}' deferred: {dep_reason}")
             return migration_record
 
-        # Mark migration as RUNNING
-        total_count = await self.get_total_count()
-
-        migration_record.status = AsyncMigration.STATUS_RUNNING
-        migration_record.batch_size = effective_batch_size
-        migration_record.total_count = total_count
-        migration_record.started_at = timezone.now()
-        migration_record.error_message = ""
-        await migration_record.asave(
-            update_fields=[
-                "status",
-                "batch_size",
-                "total_count",
-                "started_at",
-                "error_message",
-                "updated_at",
-            ]
+        # Atomically claim the migration (compare-and-swap): only one worker may transition
+        # it to RUNNING, so the 5-minute cron, a manual enqueue, and a direct call cannot
+        # process the same migration concurrently and corrupt the checkpoint counter.
+        # NOTE: a worker that crashes mid-run leaves the record RUNNING; reset it to FAILED
+        # manually (or via the admin) to allow a retry.
+        started = timezone.now()
+        claimed = await AsyncMigration.objects.filter(
+            name=self.name,
+            status__in=[
+                AsyncMigration.STATUS_PENDING,
+                AsyncMigration.STATUS_DEFERRED,
+                AsyncMigration.STATUS_FAILED,
+            ],
+        ).aupdate(
+            status=AsyncMigration.STATUS_RUNNING,
+            batch_size=effective_batch_size,
+            started_at=started,
+            error_message="",
         )
+        if not claimed:
+            current = await AsyncMigration.objects.aget(name=self.name)
+            logger.info(
+                f"Async migration '{self.name}' is already {current.status}; not re-running."
+            )
+            return current
 
+        migration_record = await AsyncMigration.objects.aget(name=self.name)
         processed = migration_record.processed_count
 
-        try:
-            while processed < total_count:
-                limit = effective_batch_size
-                count = await self.process_batch(offset=processed, limit=limit)
+        # total_count is an absolute estimate: rows already processed plus rows still
+        # remaining. The loop terminates when process_batch reports no more work, so a
+        # resumed run can never be marked COMPLETED while unprocessed rows remain.
+        remaining = await self.get_total_count()
+        migration_record.total_count = processed + remaining
+        await migration_record.asave(update_fields=["total_count", "updated_at"])
 
-                # Handle case where process_batch returns 0 (e.g. no more items)
+        try:
+            while True:
+                count = await self.process_batch(offset=processed, limit=effective_batch_size)
+
+                # No more items to process — the migration is fully drained.
                 if count <= 0:
                     break
 
                 processed += count
                 migration_record.processed_count = processed
-                await migration_record.asave(update_fields=["processed_count", "updated_at"])
+                if processed > migration_record.total_count:
+                    migration_record.total_count = processed
+                await migration_record.asave(
+                    update_fields=["processed_count", "total_count", "updated_at"]
+                )
 
             # Mark COMPLETED
             migration_record.status = AsyncMigration.STATUS_COMPLETED
-            migration_record.processed_count = max(processed, total_count)
+            migration_record.processed_count = processed
+            migration_record.total_count = max(migration_record.total_count, processed)
             migration_record.completed_at = timezone.now()
             await migration_record.asave(
-                update_fields=["status", "processed_count", "completed_at", "updated_at"]
+                update_fields=[
+                    "status",
+                    "processed_count",
+                    "total_count",
+                    "completed_at",
+                    "updated_at",
+                ]
             )
             logger.info(
                 f"Async migration '{self.name}' completed successfully. "

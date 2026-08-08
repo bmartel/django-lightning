@@ -8,11 +8,15 @@ and automatic string-to-type coercion for environment variable parsing.
 from __future__ import annotations
 
 import os
+import secrets
 import typing
 from pathlib import Path
 from typing import Any
 
 import msgspec
+
+# Publicly-known placeholder that must never be used to sign tokens in production.
+INSECURE_SECRET_KEY = "django-insecure-change-this-secret-key-in-production-1234567890!"
 
 
 def _parse_bool(val: Any) -> bool:
@@ -114,11 +118,30 @@ class BaseEnvSettings(msgspec.Struct, kw_only=True):
                 data[name] = f"sqlite:///{base_dir / 'db.sqlite3'}"
 
         # 3. Apply critical domain invariants & default overrides
+        # DEBUG is fail-safe: defaults to False unless explicitly enabled. Under an active
+        # pytest run (never production), default it on so the suite gets a self-contained
+        # dev environment without every developer having to export SECRET_KEY/DEBUG.
+        running_under_pytest = "PYTEST_VERSION" in os.environ
+        debug_default = "1" if running_under_pytest else "0"
         if "DEBUG" in data:
             raw_debug = _parse_bool(data["DEBUG"])
         else:
-            raw_debug = _parse_bool(source.get("DEBUG", "1"))
+            raw_debug = _parse_bool(source.get("DEBUG", debug_default))
         data["DEBUG"] = raw_debug
+
+        # SECRET_KEY: never ship a hardcoded production key. Require it in production;
+        # generate an ephemeral throwaway key only when DEBUG is explicitly enabled.
+        secret_key = str(data.get("SECRET_KEY") or source.get("SECRET_KEY", "")).strip()
+        if not secret_key or secret_key == INSECURE_SECRET_KEY:
+            if raw_debug:
+                secret_key = f"django-insecure-dev-only-{secrets.token_urlsafe(50)}"
+            else:
+                raise RuntimeError(
+                    "SECRET_KEY must be set to a strong, unique value when DEBUG is False. "
+                    "Set the SECRET_KEY environment variable (e.g. "
+                    "`python -c \"import secrets; print(secrets.token_urlsafe(50))\"`)."
+                )
+        data["SECRET_KEY"] = secret_key
 
         # MCP server is strictly gated by DEBUG (must be False in production)
         data["ENABLE_MCP_SERVER"] = raw_debug and _parse_bool(source.get("ENABLE_MCP_SERVER", "1"))
@@ -130,7 +153,10 @@ class BaseEnvSettings(msgspec.Struct, kw_only=True):
             and str(redis_url).strip()
         )
 
+        # ALLOWED_HOSTS: never default to a wildcard. In development fall back to
+        # loopback hosts; in production require an explicit allowlist (empty list
+        # means Django rejects all hosts until the operator configures it).
         if "ALLOWED_HOSTS" not in data or not data["ALLOWED_HOSTS"]:
-            data["ALLOWED_HOSTS"] = ["*"]
+            data["ALLOWED_HOSTS"] = ["localhost", "127.0.0.1", "[::1]"] if raw_debug else []
 
         return msgspec.convert(data, cls)

@@ -17,6 +17,7 @@ SECRET_KEY = env.SECRET_KEY
 DEBUG = env.DEBUG
 ENABLE_MCP_SERVER = env.ENABLE_MCP_SERVER
 ALLOWED_HOSTS = env.ALLOWED_HOSTS
+CSRF_TRUSTED_ORIGINS = env.CSRF_TRUSTED_ORIGINS
 
 # Application definition
 INSTALLED_APPS = [
@@ -66,15 +67,25 @@ ASGI_APPLICATION = "config.asgi.application"
 # Custom User Model out of the box
 AUTH_USER_MODEL = "app.User"
 
-# Database configuration
+# Database configuration.
+# Under the async ORM each query runs in a sync_to_async worker thread, so persistent
+# per-thread connections (CONN_MAX_AGE > 0) accumulate and can exhaust the server's
+# max_connections. Instead use a real connection pool (psycopg3) with CONN_MAX_AGE=0.
 DATABASE_URL = env.DATABASE_URL
 DATABASES = {
     "default": dj_database_url.parse(
         DATABASE_URL,
-        conn_max_age=600,
+        conn_max_age=0,
         conn_health_checks=True,
     )
 }
+
+if DATABASES["default"].get("ENGINE") == "django.db.backends.postgresql":
+    # Bounded psycopg3 pool shared across worker threads. Tune min/max to your DB's
+    # max_connections and process/worker count. If you front the DB with PgBouncer in
+    # transaction mode, drop this pool and keep CONN_MAX_AGE=0.
+    _db_options = DATABASES["default"].setdefault("OPTIONS", {})
+    _db_options["pool"] = {"min_size": 2, "max_size": 10, "timeout": 10}
 
 # Cache & Redis configuration
 REDIS_URL = env.REDIS_URL
@@ -117,8 +128,31 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS setup
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+# Only reflect all origins in local development; production must use an explicit allowlist.
+CORS_ALLOW_ALL_ORIGINS = DEBUG and not env.CORS_ALLOWED_ORIGINS
 CORS_ALLOWED_ORIGINS = env.CORS_ALLOWED_ORIGINS
+
+# Security hardening. These are enforced whenever DEBUG is off (i.e. in production).
+# Django's own `manage.py check --deploy` verifies this block.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+
+if not DEBUG:
+    # Correctly detect HTTPS behind a TLS-terminating proxy / load balancer (Caddy/Fly/k8s).
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = env.SECURE_SSL_REDIRECT
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    # HTTP Strict Transport Security. Start conservative; raise max-age once verified.
+    SECURE_HSTS_SECONDS = env.SECURE_HSTS_SECONDS
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# Request body / form field limits to bound memory use and multipart abuse.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5 MB
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 
 # Logging configuration
 LOGGING = {

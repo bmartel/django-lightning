@@ -70,6 +70,66 @@ async def test_example_async_migration_run():
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
+async def test_resumed_migration_backfills_all_rows():
+    """A migration resumed after a partial run must not be marked COMPLETED with rows left.
+
+    Regression: get_total_count() on a shrinking filter returns only the *remaining* rows,
+    so a naive `while processed < total_count` gate would skip the rest of the work.
+    """
+    # 5 users need backfilling; simulate a prior run that already processed 3 of them.
+    for i in range(5):
+        await User.objects.acreate(
+            username=f"resume_user{i}", email=f"resume{i}@example.com", bio=""
+        )
+
+    migration_cls = get_registered_async_migrations()["0001_example_backfill"]
+
+    # Pre-seed a RUNNING record as if a previous attempt processed 3 rows then crashed.
+    # (Mark 3 users as already backfilled so only 2 remain for get_total_count().)
+    processed_users = [u async for u in User.objects.filter(bio="")[:3]]
+    await User.objects.filter(id__in=[u.id for u in processed_users]).aupdate(
+        bio="Standard Lightning Account"
+    )
+    await AsyncMigration.objects.acreate(
+        name="0001_example_backfill",
+        status=AsyncMigration.STATUS_FAILED,  # a crashed prior attempt, eligible for reclaim
+        batch_size=10,
+        processed_count=3,
+        total_count=5,
+    )
+
+    record = await migration_cls().run(override_batch_size=10)
+
+    assert record.status == AsyncMigration.STATUS_COMPLETED
+    # Every user must be backfilled — no row left with an empty bio.
+    assert await User.objects.filter(bio="").acount() == 0
+    # processed_count reflects the 2 rows this resumed run actually handled, on top of 3.
+    assert record.processed_count == 5
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio
+async def test_completed_migration_not_rerun():
+    """A COMPLETED migration is never re-run, even if new matching rows appear."""
+    await AsyncMigration.objects.acreate(
+        name="0001_example_backfill",
+        status=AsyncMigration.STATUS_COMPLETED,
+        processed_count=10,
+        total_count=10,
+    )
+    await User.objects.acreate(username="late_user", email="late@example.com", bio="")
+
+    migration_cls = get_registered_async_migrations()["0001_example_backfill"]
+    record = await migration_cls().run()
+
+    assert record.status == AsyncMigration.STATUS_COMPLETED
+    # The late user's empty bio is left untouched because the migration is already done.
+    late = await User.objects.filter(username="late_user").afirst()
+    assert late.bio == ""
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio
 async def test_async_migration_failure_handling():
     """Test that exceptions during batch processing are caught and recorded properly."""
 

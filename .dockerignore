@@ -8,11 +8,20 @@ __pycache__
 *.pyo
 *.pyd
 .pytest_cache
+.ruff_cache
 .coverage
 htmlcov
 scratch
 .DS_Store
 *.log
+# Secrets and local state must never be baked into an image layer
+.env
+.env.*
+*.env
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
 docker-compose*.yml
 k8s/
 fly.toml

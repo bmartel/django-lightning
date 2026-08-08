@@ -7,7 +7,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  actions: write
 
 jobs:
   dependabot:
@@ -21,7 +20,10 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
+      # Only auto-merge patch and minor updates. Major version bumps carry breaking
+      # changes and must be reviewed by a human; they are left open, not merged.
       - name: Approve and Enable Auto-Merge for Dependabot PR
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
         run: |
           gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"

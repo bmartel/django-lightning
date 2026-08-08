@@ -79,11 +79,13 @@ def setup_mcp_server(api):
         ),
     )
     async def run_query_explain(sql: str) -> dict[str, Any]:
-        report = QueryScalabilityProfiler._analyze_generic(sql, (), False)
+        report = await QueryScalabilityProfiler.analyze_raw_sql(sql)
         return {
             "is_scalable": report.is_scalable,
+            "total_cost": report.total_cost,
             "detected_issues": report.detected_issues,
             "suggested_fixes": report.suggested_fixes,
+            "execution_nodes": report.execution_nodes,
             "sql_query": report.sql_query,
         }
 

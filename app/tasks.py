@@ -4,7 +4,7 @@ Key Performance Architecture:
 - ⚡ 10,000+ jobs/sec throughput per worker process using Python asyncio + Redis.
 - 💾 Tiny RAM Footprint (~30MB vs Celery's 500MB - 1GB+ per process).
 - 🔄 100% Async Native: Integration with Django 5.x async ORM (await Model.objects.afirst()).
-- ⏱ Automatic retries with exponential backoff, progress tracking, and cron scheduling.
+- ⏱ Automatic retries (with optional exponential backoff), progress tracking, and cron scheduling.
 """
 
 import os
@@ -103,8 +103,12 @@ settings = {
         process_pending_async_migrations,
     ],
     "cron": [
-        CronJob(cleanup_expired_sessions, cron="0 * * * *"),  # Runs hourly
-        CronJob(process_pending_async_migrations, cron="*/5 * * * *"),  # Runs every 5 minutes
+        # Retry transient failures (Redis/DB blips). For exponential backoff on ad-hoc
+        # jobs, pass retries/retry_backoff to queue.enqueue(...) at enqueue time.
+        CronJob(cleanup_expired_sessions, cron="0 * * * *", retries=3),  # Runs hourly
+        CronJob(
+            process_pending_async_migrations, cron="*/5 * * * *", retries=3
+        ),  # Runs every 5 minutes
     ],
     "concurrency": 100,  # 100 concurrent async jobs in a single worker process
 }
