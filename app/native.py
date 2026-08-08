@@ -11,8 +11,10 @@ import asyncio
 import functools
 from collections.abc import Awaitable, Callable
 from typing import Any, ParamSpec, TypeVar
+from urllib.parse import quote
 
 import msgspec
+from django_bolt import Response
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -110,6 +112,90 @@ if HAS_RUST_CORE and hasattr(rust_core, "db_query_users_json"):
     db_query_users_json = native_async(rust_core.db_query_users_json)
 else:
     db_query_users_json = None
+
+if HAS_RUST_CORE and hasattr(rust_core, "db_fetch_model_json"):
+    db_fetch_model_json = native_async(rust_core.db_fetch_model_json)
+else:
+    db_fetch_model_json = None
+
+
+def db_registered_models() -> list[str]:
+    """List Django model names registered in the native Rust fetch registry."""
+    if not HAS_RUST_CORE or not hasattr(rust_core, "db_registered_models"):
+        return []
+    return list(rust_core.db_registered_models())
+
+
+def native_db_url() -> str:
+    """
+    Build an sqlx-compatible database URL from Django's DATABASES["default"] setting.
+
+    Supports SQLite and PostgreSQL (matching the native `db_engine` crate backends).
+    """
+    from django.conf import settings
+
+    db = settings.DATABASES["default"]
+    engine = db["ENGINE"]
+
+    if "sqlite" in engine:
+        return f"sqlite://{db['NAME']}"
+
+    if "postgres" in engine:
+        user = quote(str(db.get("USER") or ""), safe="")
+        password = quote(str(db.get("PASSWORD") or ""), safe="")
+        host = db.get("HOST") or "localhost"
+        port = db.get("PORT") or 5432
+        name = db.get("NAME")
+        credentials = f"{user}:{password}@" if user else ""
+        return f"postgres://{credentials}{host}:{port}/{name}"
+
+    raise RuntimeError(
+        f"Native DB engine supports sqlite and postgres backends; got engine '{engine}'."
+    )
+
+
+def raw_json_response(
+    raw_json: bytes,
+    status_code: int = 200,
+    headers: dict[str, str] | None = None,
+) -> Response:
+    """
+    Return pre-serialized JSON bytes as an HTTP response with ZERO re-serialization.
+
+    Rust produces the JSON bytes; Python passes the buffer straight to the response
+    body without decoding or re-encoding, keeping the hot path allocation-free.
+    """
+    final_headers = {"content-type": "application/json"}
+    if headers:
+        final_headers.update(headers)
+    return Response(
+        raw_json,
+        status_code=status_code,
+        # Octet-stream body rendering passes raw bytes through untouched; the
+        # explicit content-type header keeps the wire response application/json.
+        media_type="application/octet-stream",
+        headers=final_headers,
+    )
+
+
+async def fetch_model_page_response(
+    model: str,
+    limit: int = 100,
+    after_id: int | None = None,
+    max_limit: int = 1000,
+) -> Response:
+    """
+    End-to-end native fast path: keyset-paginated model page as a raw JSON response.
+
+    Django ORM, Python serialization, and Python JSON encoding are all bypassed:
+    Rust (sqlx + serde) queries the pooled database connection, serializes rows to
+    JSON bytes with sensitive columns stripped, and the bytes are returned as-is.
+    """
+    if not HAS_RUST_CORE or db_fetch_model_json is None:
+        raise RuntimeError("rust_core native module with DB engine support is not compiled.")
+    clamped = max(1, min(limit, max_limit))
+    raw = await db_fetch_model_json(native_db_url(), model, clamped, after_id)
+    return raw_json_response(raw)
 
 
 async def query_users_native(db_url: str, limit: int = 100) -> list[dict[str, Any]]:

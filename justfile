@@ -30,6 +30,16 @@ rust-test:
     cargo test --manifest-path rust_core/Cargo.toml
 
 
+# Run reproducible HTTP benchmark (oha/wrk) against a running server
+bench path="/health" duration="30s" connections="64":
+    ./scripts/bench.sh {{path}} {{duration}} {{connections}}
+
+# Benchmark the standard health endpoint and the Rust-native DB fast path
+bench-all:
+    ./scripts/bench.sh /health 30s 64
+    @echo "NOTE: /api/native/users requires AUTH_HEADER='Authorization: Bearer <jwt>'"
+    -AUTH_HEADER="${AUTH_HEADER:-}" ./scripts/bench.sh /api/native/users 30s 64
+
 # Run local development server using django-bolt (runbolt) via uv
 dev:
     uv run manage.py runbolt --dev

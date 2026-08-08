@@ -218,86 +218,87 @@ async def handle_fast_transform(payload: HeavyStruct) -> HeavyStructOut:
 
 ## 🗄️ 4. High-Performance Rust Database Query Engine & Model Codegen
 
-In addition to CPU calculations, `rust_core` includes a high-throughput **Rust Database Query Engine** powered by `sqlx` and `tokio`.
+In addition to CPU calculations, `rust_core` includes a high-throughput **Rust Database Query Engine** powered by `sqlx` and `tokio`, supporting **both SQLite and PostgreSQL** with cached, warm connection pools (`db_engine::get_pool`) and a generated per-model query registry.
 
 ### Single Source of Truth: Django Model Codegen
 Django models (`app/models.py`) remain the authoritative single source of truth for database schema and migrations.
 To keep Rust types perfectly synchronized with Django models:
 
 1. Run **`just rust-codegen`** (or `uv run manage.py generate_rust_models`).
-2. This introspects `app/models.py` and generates `rust_core/src/db/models.rs` containing `sqlx::FromRow` structs, table constants, and field column arrays:
+2. This introspects the Django app and generates **two files** in `rust_core/crates/db_engine/src/`:
+   - **`models.rs`**: `sqlx::FromRow` structs with `TABLE_NAME` / `COLUMNS` / `PK` constants. Sensitive columns (`password`, `key_hash`, `secret`, `token`, ...) are **excluded from the generated structs and column lists entirely**, so native queries never even fetch them from the database, let alone serialize them.
+   - **`queries.rs`**: a model registry (`fetch_model_page_json`) mapping every Django model name to a typed, keyset-paginated native fetch. New Django models become natively queryable simply by re-running codegen — **no hand-written Rust required**.
 
 ```rust
 /// Generated Rust struct for Django model `User` (DB Table: `app_user`).
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct UserRow {
     pub id: i64,
+    // `password` is a sensitive column: excluded entirely by codegen,
+    // so it is never fetched from the database by native queries.
     pub username: String,
     pub email: String,
-    pub date_joined: chrono::DateTime<chrono::Utc>,
-    pub bio: String,
-    pub avatar_url: String,
     // ...
 }
 
 impl UserRow {
     pub const TABLE_NAME: &'static str = "app_user";
-    pub const COLUMNS: &'static [&'static str] = &["id", "username", "email", ...];
+    pub const COLUMNS: &'static [&'static str] = &["id", "username", "email"];
+    pub const PK: &'static str = "id";
 }
 ```
 
-### High-Speed DB Querying in Rust (`rust_core::db`)
-Rust database query functions execute within Tokio runtime inside `py.detach(|| { ... })`, releasing the GIL during database network I/O:
+### Engine Performance Rules (MANDATORY for agents writing native DB code)
+1. **NEVER create a connection pool per call.** Always obtain pools via `db_engine::get_pool(db_url)` — it caches one warm pool per URL, enabling sqlx prepared-statement reuse. Per-call pools destroy real-world latency.
+2. **Use keyset pagination** (`WHERE pk > $after_id ORDER BY pk LIMIT n`) via `fetch_page_json`, never SQL `OFFSET`.
+3. **Select explicit columns** from generated `COLUMNS` constants, never `SELECT *`.
+4. **Execute inside `py.detach(|| ...)`** so DB I/O releases the GIL.
+5. **Backends**: URLs starting with `postgres://` / `postgresql://` use the Postgres pool; everything else uses SQLite. Map Django unsigned integer fields to signed Rust types (Postgres has no unsigned columns).
 
-```rust
-use crate::db::models::UserRow;
-use pyo3::prelude::*;
-use pyo3::types::PyBytes;
-use std::sync::OnceLock;
-
-static TOKIO_RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
-
-fn get_tokio_runtime() -> &'static tokio::runtime::Runtime {
-    TOKIO_RUNTIME.get_or_init(|| {
-        tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .expect("Failed to build Tokio runtime")
-    })
-}
-
-#[pyfunction]
-pub fn db_query_users_json<'py>(py: Python<'py>, db_url: String, limit: i64) -> PyResult<Bound<'py, PyBytes>> {
-    let json_bytes = py.detach(|| {
-        let rt = get_tokio_runtime();
-        rt.block_on(async {
-            use sqlx::sqlite::SqlitePoolOptions;
-            let pool = SqlitePoolOptions::new().connect(&db_url).await?;
-            let users = sqlx::query_as::<_, UserRow>("SELECT * FROM app_user LIMIT ?")
-                .bind(limit)
-                .fetch_all(&pool)
-                .await?;
-            serde_json::to_vec(&users)
-        })
-    }).map_err(pyo3::exceptions::PyValueError::new_err)?;
-
-    Ok(PyBytes::new(py, &json_bytes))
-}
-```
-
-
-### Type-Safe Invocations in Python (`app/native.py`)
-Python endpoints call `query_users_native(db_url, limit=100)`, decoding zero-copy JSON bytes directly in `msgspec`:
+### One-Line Native Fast-Path Endpoints (Python)
+The end-to-end fast path bypasses the Django ORM, Python serialization, AND Python JSON encoding. Rust queries the pooled DB and produces JSON bytes; `raw_json_response()` passes the buffer straight to the HTTP body with zero re-serialization:
 
 ```python
-from app.native import query_users_native
+from app.routes.native import register_native_collection
+
+# Any generated Django model, one line each (auth required by default):
+register_native_collection(api, "/api/native/orders", "order")
+register_native_collection(api, "/api/native/products", "product", require_auth=False)
+```
+
+Or compose the primitives directly for custom handlers:
+
+```python
+from app.native import db_fetch_model_json, native_db_url, raw_json_response
 
 
 @api.get("/api/v1/fast-users")
-async def get_fast_users(limit: int = 100):
-    db_url = settings.DATABASES["default"]["NAME"]
-    return await query_users_native(f"sqlite://{db_url}", limit=limit)
+async def get_fast_users(limit: int = 100, after_id: int | None = None):
+    raw = await db_fetch_model_json(native_db_url(), "user", limit, after_id)
+    return raw_json_response(raw)  # zero Python decode/encode round-trip
 ```
+
+Available primitives in `app/native.py`:
+- `native_db_url()`: builds the sqlx URL (SQLite or Postgres) from Django `DATABASES` settings.
+- `db_fetch_model_json(db_url, model, limit, after_id)`: GIL-released, pooled, keyset-paginated fetch returning raw JSON bytes.
+- `raw_json_response(bytes)`: zero-re-serialization JSON response passthrough.
+- `fetch_model_page_response(model, limit, after_id)`: the two above combined.
+- `db_registered_models()`: lists model names available in the native registry.
+
+### Adding Custom Native Queries Beyond Listings
+For custom SQL (joins, aggregates), add a function to `db_engine` reusing the shared infrastructure:
+
+```rust
+pub fn my_custom_query_impl(db_url: &str) -> Result<Vec<u8>, String> {
+    let rt = get_tokio_runtime();
+    rt.block_on(async {
+        let pool = get_pool(db_url).await?;   // cached warm pool — NEVER build your own
+        // ... sqlx::query_as with explicit columns, serde_json::to_vec(...)
+    })
+}
+```
+
+Then bind it in `rust_core_pyo3/src/lib.rs` inside `py.detach(...)` and wrap with `native_async` in `app/native.py`.
 
 ---
 
@@ -310,6 +311,7 @@ Execute all compilation and testing tasks using `just` / `uv`:
 - **`just rust-build`**: Runs `uv run maturin develop --release`. Compiles optimized release build.
 - **`just rust-test`**: Runs `cargo test --manifest-path rust_core/Cargo.toml`. Executes Rust-native unit tests directly.
 - **`uv run pytest -v`**: Runs pytest suite verifying Python & Rust integration.
+- **`just bench [path] [duration] [connections]`**: Runs the reproducible `oha`/`wrk` benchmark harness (`scripts/bench.sh`) with warmup, hardware capture, and git-commit pinning. Always benchmark release builds (`uv run maturin develop --release`) with `DEBUG=false`.
 
 
 ---

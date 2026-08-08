@@ -19,23 +19,30 @@ Synthetic 1% microbenchmarks (such as bare zero-middleware echo endpoints claimi
 | **Native PyO3 Rust Core** | `~1.5 – 3.5 ms` | `< 8.0 ms` | `< 15.0 ms` | **20,000 – 50,000+ RPS** | In-process GIL-releasing Rust extensions (`rust_core`) |
 | *Synthetic Peak Limit* | *< 0.5 ms* | *< 2.0 ms* | *< 5.0 ms* | *~60,000 – 188,000 RPS* | *Raw zero-middleware echo benchmark upper bound* |
 
-### Reproduce Benchmarks Locally
+### Reproduce Benchmarks Locally (Honest Methodology)
 
-Run the included high-throughput asynchronous benchmark tool against your local server instance:
+Benchmark numbers are only meaningful when they are reproducible. The included harness (`scripts/bench.sh`) uses an industry-standard Rust/C load generator (`oha` preferred, `wrk` fallback) so the client is never the bottleneck, runs a discarded warmup phase, and stamps every result with hardware specs, git commit, and exact run parameters:
 
 ```bash
-# 1. Start the Django-Bolt server
-uv run manage.py runbolt --port 8000 --processes 4
+# 1. Build the native core in RELEASE mode and start the server without DEBUG
+uv run maturin develop --release
+DEBUG=false uv run manage.py runbolt --port 8000 --processes 4
 
-# 2. Run the benchmark tool (10,000 requests across 50 concurrent connections)
-uv run python scripts/benchmark.py --host 127.0.0.1 --port 8000 --path /health -n 10000 -c 50
+# 2. Run the harness (warmup + 30s measured run @ 64 connections)
+just bench /health 30s 64
+
+# 3. Benchmark the Rust-native DB fast path (JWT required)
+AUTH_HEADER="Authorization: Bearer <jwt>" just bench /api/native/users 30s 64
 ```
+
+Rules for honest numbers: always release builds, `DEBUG=false`, warmup before measuring, report hardware + commit alongside RPS/latency, and never compare a no-DB echo endpoint against another framework's DB workload. (`scripts/benchmark.py` remains available as a dependency-free fallback client.)
 
 ---
 
 ## Key Capabilities
 
 - **Rust-Powered Application Engine**: Driven directly by `django-bolt` (`uv run manage.py runbolt`). Eliminates the need for Uvicorn, Gunicorn, or Daphne.
+- **Rust-Native DB Fast Path (`/api/native/*`)**: End-to-end request path where Rust (sqlx + serde) queries warm, cached connection pools (SQLite or PostgreSQL) with keyset pagination and returns pre-serialized JSON bytes passed straight to the response body — bypassing the Django ORM, Python serialization, and Python JSON encoding entirely. Any Django model gets a fast-path endpoint in one line via `register_native_collection(api, path, model)` after running `manage.py generate_rust_models`. Sensitive columns (password/key hashes, secrets, tokens) are excluded from the generated Rust structs and queries entirely, so they are never even fetched from the database.
 - **Native PyO3 Rust Core (`rust_core`)**: In-process Rust compilation via PyO3 and Maturin. Release the Python GIL (`py.allow_threads`) to execute heavy CPU tasks, cryptography, or dataset processing across all hardware cores with Rayon parallelism.
 - **Custom User Model & Out-of-the-Box Auth**: Configured with `AUTH_USER_MODEL = "app.User"`, custom profile fields (`bio`, `avatar_url`), JWT authentication utilities, permission guards (`@guard`), and Django Admin registered at `/admin/`.
 - **Async-First Django 5.x ORM**: Full support for native async ORM methods (`aget`, `acreate`, `afilter`, `aupdate`, `adelete`). Strict latency enforcement (<100ms budget middleware) and surgical small-dataset index assertions (`assert_scalable_query`).
@@ -99,7 +106,34 @@ async def handle_process_batch(payload: BatchPayloadReq) -> BatchPayloadOut:
     return BatchPayloadOut(results=results)
 ```
 
-### 4. Optional Rust Scaffolding (`--no-rust`)
+### 4. Rust-Native DB Fast-Path Endpoints for Your Own Models
+
+The generic native query engine extends to every Django model you create — in any app — without writing Rust:
+
+```bash
+# 1. Define/extend models in models.py as usual, migrate, then regenerate Rust bindings
+uv run manage.py generate_rust_models   # or: just rust-codegen
+uv run maturin develop --release        # or: just rust-build
+```
+
+```python
+# 2. Register a keyset-paginated native endpoint (one line per model)
+from app.routes.native import register_native_collection
+
+register_native_collection(api, "/api/native/orders", "order")
+
+# Or compose the primitives for custom handlers:
+from app.native import db_fetch_model_json, native_db_url, raw_json_response
+
+@api.get("/api/v1/fast-orders")
+async def fast_orders(limit: int = 100, after_id: int | None = None):
+    raw = await db_fetch_model_json(native_db_url(), "order", limit, after_id)
+    return raw_json_response(raw)  # zero Python re-serialization
+```
+
+Endpoints require JWT/API-key auth by default (`require_auth=False` opts out for public data), clamp page sizes, and use index-backed keyset pagination (`?limit=100&after_id=250`) so latency stays flat at any table size.
+
+### 5. Optional Rust Scaffolding (`--no-rust`)
 
 Rust integration is opt-in. If your application does not require Rust extensions, scaffold without Rust support:
 

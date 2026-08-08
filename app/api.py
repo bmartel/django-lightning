@@ -12,20 +12,24 @@ from app.middleware import LatencyBudgetMiddleware
 from app.routes.auth import register_auth_routes
 from app.routes.health import register_health_routes
 from app.routes.mcp_server import setup_mcp_server
+from app.routes.native import register_native_routes
 from app.routes.realtime import register_realtime_routes
 from app.routes.tenants import register_tenant_routes
 
-# Initialize high-performance BoltAPI instance
+DEBUG = getattr(settings, "DEBUG", False)
+
+# Initialize high-performance BoltAPI instance.
+# Response validation and verbose timing/logging middleware are development
+# diagnostics: they add per-request cost, so they are enabled only in DEBUG.
 api = BoltAPI(
     prefix="",
     trailing_slash="strip",
-    validate_response=True,
+    validate_response=DEBUG,
     compression=CompressionConfig(),
-    enable_logging=True,
+    enable_logging=DEBUG,
     middleware=[
         LatencyBudgetMiddleware,
-        TimingMiddleware,
-        LoggingMiddleware,
+        *([TimingMiddleware, LoggingMiddleware] if DEBUG else []),
     ],
     openapi_config=OpenAPIConfig(
         title="Django Lightning API",
@@ -45,6 +49,7 @@ register_health_routes(api)
 register_auth_routes(api)
 register_tenant_routes(api)
 register_realtime_routes(api)
+register_native_routes(api)
 
 
 # Mount MCP (Model Context Protocol) Server at /mcp ONLY in development (DEBUG=True)

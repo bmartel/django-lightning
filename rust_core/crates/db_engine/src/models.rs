@@ -27,6 +27,7 @@ pub struct UserRow {
 impl UserRow {
     pub const TABLE_NAME: &'static str = "app_user";
     pub const COLUMNS: &'static [&'static str] = &["id", "last_login", "is_superuser", "username", "first_name", "last_name", "email", "is_staff", "is_active", "date_joined", "bio", "avatar_url", "created_at", "updated_at"];
+    pub const PK: &'static str = "id";
 }
 
 /// Generated Rust struct for Django model `AsyncMigration`.
@@ -36,9 +37,9 @@ pub struct AsyncMigrationRow {
     pub id: i64,
     pub name: String,
     pub status: String,
-    pub batch_size: u32,
-    pub processed_count: u32,
-    pub total_count: u32,
+    pub batch_size: i32,
+    pub processed_count: i32,
+    pub total_count: i32,
     pub error_message: String,
     pub started_at: Option<chrono::DateTime<chrono::Utc>>,
     pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
@@ -49,6 +50,7 @@ pub struct AsyncMigrationRow {
 impl AsyncMigrationRow {
     pub const TABLE_NAME: &'static str = "app_asyncmigration";
     pub const COLUMNS: &'static [&'static str] = &["id", "name", "status", "batch_size", "processed_count", "total_count", "error_message", "started_at", "completed_at", "created_at", "updated_at"];
+    pub const PK: &'static str = "id";
 }
 
 /// Generated Rust struct for Django model `Tenant`.
@@ -65,6 +67,7 @@ pub struct TenantRow {
 impl TenantRow {
     pub const TABLE_NAME: &'static str = "app_tenant";
     pub const COLUMNS: &'static [&'static str] = &["id", "name", "slug", "created_at", "updated_at"];
+    pub const PK: &'static str = "id";
 }
 
 /// Generated Rust struct for Django model `TenantMember`.
@@ -81,6 +84,7 @@ pub struct TenantMemberRow {
 impl TenantMemberRow {
     pub const TABLE_NAME: &'static str = "app_tenantmember";
     pub const COLUMNS: &'static [&'static str] = &["id", "tenant_id", "user_id", "role", "created_at"];
+    pub const PK: &'static str = "id";
 }
 
 /// Generated Rust struct for Django model `APIKey`.
@@ -99,4 +103,5 @@ pub struct APIKeyRow {
 impl APIKeyRow {
     pub const TABLE_NAME: &'static str = "app_apikey";
     pub const COLUMNS: &'static [&'static str] = &["id", "name", "prefix", "user_id", "is_active", "expires_at", "created_at"];
+    pub const PK: &'static str = "id";
 }

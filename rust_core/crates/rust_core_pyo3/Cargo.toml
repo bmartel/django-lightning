@@ -11,3 +11,4 @@ crate-type = ["cdylib"]
 pyo3 = { version = "0.29", features = ["extension-module", "abi3-py312"] }
 db_engine = { path = "../db_engine" }
 core_utils = { path = "../core_utils" }
+mimalloc = { version = "0.1", default-features = false }
