@@ -219,7 +219,7 @@ dev = [
 requires-dist = [
     { name = "bolt-mcp", specifier = ">=0.1.0" },
     { name = "dj-database-url", specifier = ">=3.1.2" },
-    { name = "django", specifier = ">=6.0" },
+    { name = "django", specifier = ">=6.0.7" },
     { name = "django-bolt", specifier = ">=0.9.1" },
     { name = "django-cors-headers", specifier = ">=4.9.0" },
     { name = "django-stubs", marker = "extra == 'dev'", specifier = ">=6.0.7" },
