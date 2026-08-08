@@ -15,6 +15,16 @@ class User(AbstractUser):
         indexes = [
             models.Index(fields=["-date_joined"], name="user_date_joined_idx"),
         ]
+        constraints = [
+            # Enforce unique, indexed emails for real addresses while still allowing
+            # multiple accounts with a blank email (a partial index also serves the
+            # email lookup done at registration).
+            models.UniqueConstraint(
+                fields=["email"],
+                condition=~models.Q(email=""),
+                name="user_unique_email_when_set",
+            ),
+        ]
 
     def __str__(self):
         return self.username
@@ -37,7 +47,7 @@ class AsyncMigration(models.Model):
         (STATUS_FAILED, "Failed"),
     ]
 
-    name = models.CharField(max_length=255, unique=True, db_index=True)
+    name = models.CharField(max_length=255, unique=True)
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True
     )
@@ -93,10 +103,9 @@ class TenantMember(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        # The unique constraint already provides the (tenant, user) composite index,
+        # so no explicit Index is needed (it would just duplicate write cost).
         unique_together = [("tenant", "user")]
-        indexes = [
-            models.Index(fields=["tenant", "user"], name="tenant_member_user_idx"),
-        ]
 
     def __str__(self):
         return f"{self.user.username} -> {self.tenant.name} [{self.role}]"
@@ -107,7 +116,7 @@ class APIKey(models.Model):
 
     name = models.CharField(max_length=255)
     prefix = models.CharField(max_length=16, db_index=True)
-    key_hash = models.CharField(max_length=128, unique=True, db_index=True)
+    key_hash = models.CharField(max_length=128, unique=True)
     user = models.ForeignKey("app.User", on_delete=models.CASCADE, related_name="api_keys")
     is_active = models.BooleanField(default=True, db_index=True)
     expires_at = models.DateTimeField(null=True, blank=True)

@@ -1,9 +1,8 @@
 import msgspec
-from django.contrib.auth import get_user_model
+from asgiref.sync import sync_to_async
 from django.core.cache import cache
+from django.db import connection
 from django_bolt import BoltAPI
-
-User = get_user_model()
 
 
 class HealthCheckOut(msgspec.Struct):
@@ -11,6 +10,12 @@ class HealthCheckOut(msgspec.Struct):
     database: str
     cache: str
     version: str = "0.1.0"
+
+
+def _ping_db() -> None:
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
 
 
 def register_health_routes(api: BoltAPI):
@@ -24,7 +29,9 @@ def register_health_routes(api: BoltAPI):
     async def health_check():
         db_ok = True
         try:
-            await User.objects.acount()
+            # Cheap connectivity probe (SELECT 1) — never scans a table, so the check
+            # stays O(1) regardless of how many rows the database holds.
+            await sync_to_async(_ping_db)()
         except Exception:
             db_ok = False
 

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from asgiref.sync import sync_to_async
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import QuerySet
 
 logger = logging.getLogger("django.lightning.profiling")
@@ -64,14 +64,40 @@ class QueryScalabilityProfiler:
     ) -> ScalabilityReport:
         compiler = queryset.query.get_compiler(connection.alias)
         sql, params = compiler.as_sql()
-        vendor = connection.vendor
+        return cls._dispatch_analyze(sql, params, max_cost_threshold, allow_seq_scan)
 
+    @classmethod
+    def _dispatch_analyze(
+        cls,
+        sql: str,
+        params: tuple,
+        max_cost_threshold: float = 1000.0,
+        allow_seq_scan: bool = False,
+    ) -> ScalabilityReport:
+        vendor = connection.vendor
         if vendor == "postgresql":
             return cls._analyze_postgresql(sql, params, max_cost_threshold, allow_seq_scan)
         elif vendor == "sqlite":
             return cls._analyze_sqlite(sql, params, allow_seq_scan)
         else:
             return cls._analyze_generic(sql, params, allow_seq_scan)
+
+    @classmethod
+    async def analyze_raw_sql(
+        cls,
+        sql: str,
+        max_cost_threshold: float = 1000.0,
+        allow_seq_scan: bool = False,
+    ) -> ScalabilityReport:
+        """Run a real database EXPLAIN on a raw SQL string (developer diagnostics only).
+
+        EXPLAIN (without ANALYZE) plans but does not execute the statement, and the DB
+        drivers run a single statement per call. This is exposed only through the
+        DEBUG-gated MCP dev server; do not wire it to untrusted input.
+        """
+        return await sync_to_async(cls._dispatch_analyze)(
+            sql, (), max_cost_threshold, allow_seq_scan
+        )
 
     @classmethod
     def _analyze_postgresql(
@@ -87,10 +113,14 @@ class QueryScalabilityProfiler:
         total_cost = 0.0
         raw_plan = None
 
-        with connection.cursor() as cursor:
-            # FORCE PostgreSQL planner to evaluate index paths by disabling seqscan locally
-            cursor.execute("SET LOCAL enable_seqscan = OFF;")
-            try:
+        # `SET LOCAL` only applies inside a transaction block; wrapping the EXPLAIN in
+        # an atomic block makes the seqscan-disable take effect (so index paths are
+        # actually forced on tiny test tables) and scopes it to this query so it never
+        # leaks onto the persistent connection.
+        try:
+            with transaction.atomic(), connection.cursor() as cursor:
+                # FORCE PostgreSQL planner to evaluate index paths by disabling seqscan locally
+                cursor.execute("SET LOCAL enable_seqscan = OFF;")
                 cursor.execute(f"EXPLAIN (FORMAT JSON) {sql}", params)
                 explain_res = cursor.fetchone()
                 if explain_res and explain_res[0]:
@@ -99,8 +129,8 @@ class QueryScalabilityProfiler:
                     total_cost = float(plan_data.get("Total Cost", 0.0))
 
                     cls._traverse_pg_nodes(plan_data, nodes, issues, fixes, allow_seq_scan)
-            except Exception as err:
-                issues.append(f"Failed to execute PostgreSQL EXPLAIN: {err}")
+        except Exception as err:
+            issues.append(f"Failed to execute PostgreSQL EXPLAIN: {err}")
 
         if total_cost > max_cost_threshold and not allow_seq_scan:
             msg = (

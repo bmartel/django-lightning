@@ -44,11 +44,16 @@ def generate_cache_key(
             sorted_params = sorted(request_obj.query_params.items())
             key_parts.append(str(sorted_params))
 
-    # Hash extra args/kwargs
+    # Hash extra args/kwargs. The Request object must be excluded from BOTH args and
+    # kwargs: its default repr embeds a memory address, which would make every call
+    # hash to a different key (near-zero cache hit rate) and, worse, could collide when
+    # the allocator recycles an address. The request identity is already captured above
+    # via method/path/query.
+    clean_args = tuple(a for a in args if not isinstance(a, Request))
     clean_kwargs = {k: v for k, v in kwargs.items() if not isinstance(v, Request)}
-    if clean_kwargs or args:
+    if clean_kwargs or clean_args:
         payload_hash = hashlib.sha256(
-            str((args, sorted(clean_kwargs.items()))).encode()
+            str((clean_args, sorted(clean_kwargs.items()))).encode()
         ).hexdigest()[:12]
         key_parts.append(payload_hash)
 

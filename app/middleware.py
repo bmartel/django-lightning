@@ -3,6 +3,7 @@
 import logging
 import time
 import uuid
+from collections import deque
 from typing import Any
 
 from django_bolt import BaseMiddleware, Request, Response
@@ -24,7 +25,8 @@ class LatencyMetricsTracker:
         self.total_latency_ms = 0.0
         self.max_latency_ms = 0.0
         self.min_latency_ms = float("inf")
-        self.recent_latencies: list[dict[str, Any]] = []
+        # Bounded ring buffer: O(1) append/evict instead of O(n) list.pop(0).
+        self.recent_latencies: deque[dict[str, Any]] = deque(maxlen=100)
 
     def record(self, method: str, path: str, elapsed_ms: float, passed: bool):
         self.total_requests += 1
@@ -48,8 +50,6 @@ class LatencyMetricsTracker:
                 "timestamp": time.time(),
             }
         )
-        if len(self.recent_latencies) > 100:
-            self.recent_latencies.pop(0)
 
     def get_stats(self) -> dict[str, Any]:
         avg_latency = (
@@ -71,7 +71,7 @@ class LatencyMetricsTracker:
                 if self.total_requests > 0
                 else 100.0
             ),
-            "recent_requests": self.recent_latencies[-10:],
+            "recent_requests": list(self.recent_latencies)[-10:],
         }
 
 

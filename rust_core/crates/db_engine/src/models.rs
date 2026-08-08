@@ -9,7 +9,6 @@ use sqlx::FromRow;
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct UserRow {
     pub id: i64,
-    pub password: String,
     pub last_login: Option<chrono::DateTime<chrono::Utc>>,
     pub is_superuser: bool,
     pub username: String,
@@ -27,7 +26,7 @@ pub struct UserRow {
 
 impl UserRow {
     pub const TABLE_NAME: &'static str = "app_user";
-    pub const COLUMNS: &'static [&'static str] = &["id", "password", "last_login", "is_superuser", "username", "first_name", "last_name", "email", "is_staff", "is_active", "date_joined", "bio", "avatar_url", "created_at", "updated_at"];
+    pub const COLUMNS: &'static [&'static str] = &["id", "last_login", "is_superuser", "username", "first_name", "last_name", "email", "is_staff", "is_active", "date_joined", "bio", "avatar_url", "created_at", "updated_at"];
 }
 
 /// Generated Rust struct for Django model `AsyncMigration`.
@@ -91,7 +90,6 @@ pub struct APIKeyRow {
     pub id: i64,
     pub name: String,
     pub prefix: String,
-    pub key_hash: String,
     pub user_id: i64,
     pub is_active: bool,
     pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
@@ -100,5 +98,5 @@ pub struct APIKeyRow {
 
 impl APIKeyRow {
     pub const TABLE_NAME: &'static str = "app_apikey";
-    pub const COLUMNS: &'static [&'static str] = &["id", "name", "prefix", "key_hash", "user_id", "is_active", "expires_at", "created_at"];
+    pub const COLUMNS: &'static [&'static str] = &["id", "name", "prefix", "user_id", "is_active", "expires_at", "created_at"];
 }

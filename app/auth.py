@@ -1,3 +1,4 @@
+import asyncio
 import secrets
 import time
 from typing import Any
@@ -6,6 +7,7 @@ import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password, make_password
+from django.utils import timezone
 from django_bolt.exceptions import HTTPException
 
 User = get_user_model()
@@ -38,19 +40,26 @@ async def get_current_user(request) -> dict[str, Any]:
     # Check for X-API-Key header first
     api_key_header = request.headers.get("X-API-Key", "") or request.headers.get("x-api-key", "")
     if api_key_header:
+        from django.db.models import Q
+
         from app.models import APIKey
 
         prefix = api_key_header[:12]
+        now = timezone.now()
         matching_keys = [
             k
-            async for k in APIKey.objects.filter(prefix=prefix, is_active=True).select_related(
-                "user"
-            )
+            async for k in APIKey.objects.filter(
+                Q(expires_at__isnull=True) | Q(expires_at__gt=now),
+                prefix=prefix,
+                is_active=True,
+            ).select_related("user")
         ]
 
+        # Verifying the PBKDF2 hash is CPU-heavy; run it off the event loop so a burst
+        # of API-key requests cannot serialize (and stall) every other in-flight request.
         key_obj = None
         for k in matching_keys:
-            if check_password(api_key_header, k.key_hash):
+            if await asyncio.to_thread(check_password, api_key_header, k.key_hash):
                 key_obj = k
                 break
 

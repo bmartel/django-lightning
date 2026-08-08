@@ -1,4 +1,6 @@
+from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction
 from django_bolt import BoltAPI, Depends
 from django_bolt.exceptions import HTTPException
 
@@ -7,6 +9,14 @@ from app.models import Tenant, TenantMember
 from app.schemas.tenant import TenantCreate, TenantOut
 
 User = get_user_model()
+
+
+def _create_tenant_with_owner(name: str, slug: str, user) -> Tenant:
+    """Create a tenant and its owner membership atomically (both rows or neither)."""
+    with transaction.atomic():
+        tenant = Tenant.objects.create(name=name, slug=slug)
+        TenantMember.objects.create(tenant=tenant, user=user, role=TenantMember.ROLE_OWNER)
+    return tenant
 
 
 def register_tenant_routes(api: BoltAPI):
@@ -26,11 +36,14 @@ def register_tenant_routes(api: BoltAPI):
         if not user:
             raise HTTPException(404, "User not found")
 
-        if await Tenant.objects.filter(slug=payload.slug).aexists():
+        # Create tenant + owner membership atomically. A concurrent request racing on the
+        # same slug loses the unique constraint and gets a clean 400 (never an orphan tenant).
+        try:
+            tenant = await sync_to_async(_create_tenant_with_owner)(
+                payload.name, payload.slug, user
+            )
+        except IntegrityError:
             raise HTTPException(400, "Tenant slug already taken.")
-
-        tenant = await Tenant.objects.acreate(name=payload.name, slug=payload.slug)
-        await TenantMember.objects.acreate(tenant=tenant, user=user, role=TenantMember.ROLE_OWNER)
 
         return {"id": tenant.id, "name": tenant.name, "slug": tenant.slug, "role": "OWNER"}
 

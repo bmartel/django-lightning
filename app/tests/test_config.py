@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import msgspec
+import pytest
 
 from app.config import EnvSettings
 from app.env import BaseEnvSettings, _parse_bool, _parse_csv_list
@@ -23,13 +24,45 @@ def test_parse_csv_list_utility():
     assert _parse_csv_list("") == []
 
 
-def test_env_settings_defaults():
+def test_env_settings_dev_defaults_under_pytest():
+    # The test process sets PYTEST_VERSION, so load_from_env treats an empty environment
+    # as a development context: DEBUG on, MCP available, and loopback (never wildcard) hosts.
     settings = EnvSettings.load_from_env(env_dict={})
     assert isinstance(settings, EnvSettings)
     assert settings.DEBUG is True
     assert settings.ENABLE_MCP_SERVER is True
-    assert settings.ALLOWED_HOSTS == ["*"]
+    # ALLOWED_HOSTS must never silently become a wildcard.
+    assert settings.ALLOWED_HOSTS == ["localhost", "127.0.0.1", "[::1]"]
+    assert "*" not in settings.ALLOWED_HOSTS
     assert settings.PORT == 8000
+    # A dev key is generated but is clearly marked insecure and is not the old placeholder.
+    assert settings.SECRET_KEY
+    assert settings.SECRET_KEY != "django-insecure-change-this-secret-key-in-production-1234567890!"
+
+
+def test_production_requires_explicit_secret_key():
+    # DEBUG explicitly off with no SECRET_KEY must fail closed, never boot insecurely.
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        EnvSettings.load_from_env(env_dict={"DEBUG": "0"})
+
+
+def test_production_rejects_insecure_placeholder_key():
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        EnvSettings.load_from_env(
+            env_dict={
+                "DEBUG": "0",
+                "SECRET_KEY": "django-insecure-change-this-secret-key-in-production-1234567890!",
+            }
+        )
+
+
+def test_production_allowed_hosts_not_wildcard():
+    settings = EnvSettings.load_from_env(
+        env_dict={"DEBUG": "0", "SECRET_KEY": "a-strong-unique-production-secret-value"}
+    )
+    assert settings.DEBUG is False
+    assert settings.ALLOWED_HOSTS == []
+    assert settings.ENABLE_MCP_SERVER is False
 
 
 def test_env_settings_custom_values():
