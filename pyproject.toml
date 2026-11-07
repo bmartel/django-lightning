@@ -5,7 +5,7 @@ description = "High-performance Agentic Django-Bolt starter template for product
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "django>=6.1.2",
+    "django>=6.1.3",
     "django-bolt>=0.13.0",
     "bolt-mcp>=0.2.3",
     "msgspec>=0.22.0",
