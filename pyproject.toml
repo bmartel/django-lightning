@@ -30,7 +30,7 @@ module-name = "app.rust_core"
 [project.optional-dependencies]
 dev = [
     "maturin>=1.15.0",
-    "mypy>=2.4.0",
+    "mypy>=2.4.1",
     "django-stubs>=6.1.2",
     "pytest>=9.2.0",
     "pytest-asyncio>=1.4.1",
