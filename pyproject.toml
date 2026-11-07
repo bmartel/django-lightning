@@ -14,7 +14,7 @@ dependencies = [
     "django-cors-headers>=4.9.0",
     "pyjwt>=2.15.1",
     "redis>=8.1.0",
-    "saq>=0.26.4",
+    "saq>=0.26.5",
 ]
 
 [build-system]
